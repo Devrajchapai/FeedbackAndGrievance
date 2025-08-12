@@ -5,25 +5,16 @@ import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 
 
-
-const Stack = createNativeStackNavigator();
-
-
-const index = () => {
-  
-  return ( 
-  
+const layout = () => {
+    const Stack = createNativeStackNavigator();
+  return (
     <Stack.Navigator>
       <Stack.Screen name="login" component={LoginScreen}/>
       <Stack.Screen name="home" component={HomeScreen}/>
       <Stack.Screen name="loading" component={LoadingScreen}/>
       <Stack.Screen name="signup" component={SignupScreen}/>
    </Stack.Navigator>
-   
-      
- 
   )
 }
 
-
-export default index
+export default layout
