@@ -1,5 +1,5 @@
 import { NavigationContainer } from "@react-navigation/native"
-import layout from "./_layout"
+import Layout from "./_layout"
 
 
 const index = () => {
@@ -7,7 +7,7 @@ const index = () => {
   return ( 
   
     <NavigationContainer>
-      <layout />
+      <Layout />
     </NavigationContainer>
    
       

@@ -1,24 +1,22 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
+import { logout } from '../src/api';
 
-const HomeScreen = (props) => {
-const [email, setEmail] = useState('loading');
+const HomeScreen = ({ navigation }) => {
+  const handleLogout = async () => {
+    await logout();
+    navigation.navigate('LoginScreen');
+  };
 
- 
   return (
-    <View  >
-      <Text style ={{fontSize: 18}}>Your email is {email}</Text>
-      <Button 
-                icon="account-arrow-right" 
-                mode="contained" 
-                onPress={() => props.navigation.navigate('login')}
-                style={{marginLeft: 18, marginRight: 18, marginTop: 18}}
-            >
-                Logout
-            </Button> 
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Welcome to Feedback and Grievance App</Text>
+      <Button title="Provide Feedback" onPress={() => navigation.navigate('FeedbackScreen')} />
+      <Button title="Submit Grievance" onPress={() => navigation.navigate('GrievanceScreen')} />
+      <Button title="Logout" onPress={handleLogout} />
     </View>
-  )
-}
+  );
+};
 
 export default HomeScreen
