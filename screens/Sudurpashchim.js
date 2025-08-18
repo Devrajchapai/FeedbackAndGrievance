@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, View, FlatList } from 'react-native';
 import { Avatar, Card, Text } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-// Data array for the districts of Sudurpashchim Province
+
 const districtsData = [
   { id: '1', name: 'Achham', description: 'A remote, hilly district with a rugged landscape and rich cultural heritage.', imageUri: 'https://picsum.photos/id/780/700/400' },
   { id: '2', name: 'Baitadi', description: 'Known for its historical and religious sites, and its strategic location on the border with India.', imageUri: 'https://picsum.photos/id/785/700/400' },
@@ -18,20 +18,19 @@ const districtsData = [
 
 const Sudurpashchim = () => {
 
-  // Function to render each district card item in the FlatList
+ 
   const renderDistrictCard = ({ item }) => (
     <TouchableOpacity
       style={styles.cardContainer}
       onPress={() => {
         console.log(`Navigating to feedback page for ${item.name}`);
-        // Here you would add navigation logic to go to a new screen
-        // for providing feedback for the selected district.
+        
       }}
     >
       <Card mode="elevated" style={styles.card}>
         <Card.Title
           title={item.name}
-          left={(props) => <Avatar.Icon {...props} icon="map" />}
+          left={(props) => <Avatar.Icon {...props} icon="map-marker" />}
         />
         <Card.Cover source={{ uri: item.imageUri }} />
         <Card.Content>
@@ -60,11 +59,11 @@ const Sudurpashchim = () => {
   );
 };
 
-// Stylesheet for the component
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffe0b2', // A light orange-peach color for Sudurpashchim Province
+    backgroundColor: '#ffe0b2', 
   },
   safeArea: {
     flex: 1,

@@ -68,7 +68,7 @@ const HomeScreen = ({navigation}) => {
         <Card.Title
           title={item.title}
           subtitle={item.subtitle}
-          left={(props) => <Avatar.Icon {...props} icon="folder" />}
+          left={(props) => <Avatar.Icon {...props} icon="image-filter-hdr" />}
         />
         <Card.Cover source={{ uri: item.imageUri }} />
         <Card.Content>

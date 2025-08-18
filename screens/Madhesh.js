@@ -30,7 +30,7 @@ const Madhesh = () => {
       <Card mode="elevated" style={styles.card}>
         <Card.Title
           title={item.name}
-          left={(props) => <Avatar.Icon {...props} icon="map" />}
+          left={(props) => <Avatar.Icon {...props} icon="map-marker" />}
         />
         <Card.Cover source={{ uri: item.imageUri }} />
         <Card.Content>
