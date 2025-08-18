@@ -9,10 +9,10 @@ const layout = () => {
     const Stack = createNativeStackNavigator();
   return (
     <Stack.Navigator>
-      <Stack.Screen name="login" component={LoginScreen}/>
-      <Stack.Screen name="home" component={HomeScreen}/>
-      <Stack.Screen name="loading" component={LoadingScreen}/>
-      <Stack.Screen name="signup" component={SignupScreen}/>
+      <Stack.Screen name="login" component={LoginScreen} options={{headerShown: false}}/>
+      <Stack.Screen name="home" component={HomeScreen} options={{headerShown: false}}/>
+      <Stack.Screen name="loading" component={LoadingScreen} options={{headerShown: false}}/>
+      <Stack.Screen name="signup" component={SignupScreen} options={{headerShown: false}}/>
    </Stack.Navigator>
   )
 }

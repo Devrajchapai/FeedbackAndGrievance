@@ -8,9 +8,7 @@ const index = () => {
   
     <NavigationContainer>
       <layout />
-    </NavigationContainer>
-   
-      
+    </NavigationContainer>   
  
   )
 }
