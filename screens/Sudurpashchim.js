@@ -16,13 +16,14 @@ const districtsData = [
   { id: '9', name: 'Kanchanpur', description: 'Located in the Terai region, known for its flat plains, forests, and Shuklaphanta National Park.', imageUri: 'https://picsum.photos/id/820/700/400' },
 ];
 
-const Sudurpashchim = () => {
+const Sudurpashchim = ({navigation}) => {
 
  
   const renderDistrictCard = ({ item }) => (
     <TouchableOpacity
       style={styles.cardContainer}
       onPress={() => {
+
         console.log(`Navigating to feedback page for ${item.name}`);
         
       }}

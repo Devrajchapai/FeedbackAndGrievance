@@ -12,7 +12,7 @@ const LoginScreen = ({ navigation }) => {
 
   const sendCred = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/token/", {
+      const response = await fetch("http://127.0.0.2:8000/api/token/", {
         // 👆 Use 10.0.2.2 for Android emulator, 127.0.0.1 works for iOS simulator
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -20,7 +20,7 @@ const districtsData = [
   { id: '13', name: 'Makwanpur', description: 'Known for its forests, wildlife, and the historic Makwanpur Gadhi fort.', imageUri: 'https://picsum.photos/id/485/700/400' },
 ];
 
-const Bagmati = () => {
+const Bagmati = ({navigation}) => {
 
   // Function to render each district card item in the FlatList
   const renderDistrictCard = ({ item }) => (
@@ -28,8 +28,7 @@ const Bagmati = () => {
       style={styles.cardContainer}
       onPress={() => {
         console.log(`Navigating to feedback page for ${item.name}`);
-        // Here you would add navigation logic to go to a new screen
-        // for providing feedback for the selected district.
+        navigation.navigate('Logout')
       }}
     >
       <Card mode="elevated" style={styles.card}>

@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen'
 import SignupScreen from '../screens/SignupScreen';
+import LogoutScreen from '../screens/LogoutScreen';
 import Bagmati from '../screens/Bagmati';
 import Koshi from '../screens/Koshi';
 import Gandaki from '../screens/Gandaki';
@@ -64,6 +65,7 @@ const layout = () => {
         <Stack.Screen name="Lumbini" component ={Lumbini} />
         <Stack.Screen name="Karnali" component ={Karnali} />
         <Stack.Screen name="Sudurpashchim" component ={Sudurpashchim} />
+        <Stack.Screen name="Logout" component ={LogoutScreen} />
         </>
       ) : (
         <>
