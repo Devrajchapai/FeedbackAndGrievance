@@ -3,9 +3,8 @@ import { StyleSheet, TouchableOpacity, View, FlatList } from 'react-native';
 import { Avatar, Card, Text } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-// Data array for the districts of Koshi Province
 const districtsData = [
-  { id: '1', name: 'Bhojpur', description: 'Known for its beautiful scenery and unique local culture.', imageUri: 'https://picsum.photos/id/491/700/400' },
+  { id: '1', name: 'Bhojpur', description: 'Known for its beautiful scenery and unique local culture.', imageUri: 'https://superdesk-pro-c.s3.amazonaws.com/sd-nepalitimes/2022111011110/636ccc779c7e80680e08bc24jpeg.jpg' },
   { id: '2', name: 'Dhankuta', description: 'A hilly district famous for orange cultivation and its serene atmosphere.', imageUri: 'https://picsum.photos/id/500/700/400' },
   { id: '3', name: 'Ilam', description: 'Renowned for its tea gardens, lush greenery, and scenic beauty.', imageUri: 'https://picsum.photos/id/507/700/400' },
   { id: '4', name: 'Jhapa', description: 'The easternmost district, known as the "tea and rice hub" of Nepal.', imageUri: 'https://picsum.photos/id/511/700/400' },
@@ -23,14 +22,11 @@ const districtsData = [
 
 const Koshi = () => {
 
-  // Function to render each district card item in the FlatList
   const renderDistrictCard = ({ item }) => (
     <TouchableOpacity
       style={styles.cardContainer}
       onPress={() => {
         console.log(`Navigating to feedback page for ${item.name}`);
-        // Here you would add navigation logic to go to a new screen
-        // for providing feedback for the selected district.
       }}
     >
       <Card mode="elevated" style={styles.card}>
@@ -65,11 +61,11 @@ const Koshi = () => {
   );
 };
 
-// Stylesheet for the component
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e8f5e9', // A light green color for Koshi Province
+    backgroundColor: '#e8f5e9',
   },
   safeArea: {
     flex: 1,

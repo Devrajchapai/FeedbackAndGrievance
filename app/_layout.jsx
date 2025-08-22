@@ -20,7 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const layout = () => {
    const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  
     const Stack = createNativeStackNavigator();
 
     useEffect(() => {
@@ -42,6 +42,7 @@ const layout = () => {
     };
 
     checkToken();
+
   }, []);
 
   if (loading) {
@@ -55,8 +56,8 @@ const layout = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isLoggedIn ? (
-        <>
+      {/* {isLoggedIn? (
+        <> */}
         <Stack.Screen name="HomeScreen" component={HomeScreen} />
         <Stack.Screen name="Bagmati" component ={Bagmati} />
         <Stack.Screen name="Gandaki" component ={Gandaki} />
@@ -66,13 +67,13 @@ const layout = () => {
         <Stack.Screen name="Karnali" component ={Karnali} />
         <Stack.Screen name="Sudurpashchim" component ={Sudurpashchim} />
         <Stack.Screen name="Logout" component ={LogoutScreen} />
-        </>
+        {/* </>
       ) : (
-        <>
+        <> */}
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
-        </>
-      )}
+        {/* </>
+      )} */}
     </Stack.Navigator>
   )
 }
