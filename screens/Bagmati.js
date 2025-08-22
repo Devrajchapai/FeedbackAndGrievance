@@ -28,8 +28,6 @@ const Bagmati = () => {
       style={styles.cardContainer}
       onPress={() => {
         console.log(`Navigating to feedback page for ${item.name}`);
-        // Here you would add navigation logic to go to a new screen
-        // for providing feedback for the selected district.
       }}
     >
       <Card mode="elevated" style={styles.card}>

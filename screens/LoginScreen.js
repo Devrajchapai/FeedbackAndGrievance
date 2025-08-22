@@ -13,8 +13,6 @@ const LoginScreen = ({ navigation }) => {
 
   try {
     const response = await fetch("http://127.0.0.1:8000/api/token/", {
-      // 👆 If you're using Android Emulator, use 10.0.2.2 instead of 127.0.0.1
-      // For iOS Simulator, you can keep 127.0.0.1
 
       method: 'POST',
       headers: {
