@@ -34,7 +34,7 @@ const SignupScreen = ({ navigation }) => {
 
     if (response.ok) {
       alert("Signup successful!");
-      navigation.navigate("LoginScreen");
+      navigation.replace("HomeScreenhome");
     } else {
       alert("Signup failed: " + (data.message || JSON.stringify(data)));
     }
@@ -97,7 +97,7 @@ const SignupScreen = ({ navigation }) => {
             >
               Sign Up
             </Button>
-            <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={{ fontSize: 18, marginLeft: 18, marginTop: 20 }}>
                 Already have an account? Login
               </Text>
