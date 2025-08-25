@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View, FlatList, StatusBar } from 'react-native';
-import {Avatar, Card, Text } from 'react-native-paper';
+import {Avatar, Button, Card, Text } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const provincesData = [
@@ -90,6 +90,15 @@ const HomeScreen = ({navigation}) => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
         />
+        <Button
+            mode="contained"
+            icon="logout"
+            onPress={() => navigation.navigate('Logout')}
+            style={styles.logoutButton}
+            labelStyle={styles.logoutButtonText}
+          >
+            Logout
+          </Button>
       </SafeAreaView>
     </SafeAreaProvider>
   );

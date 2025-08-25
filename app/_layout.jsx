@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import FeedbackScreen from '../screens/FeedbackScreen';
 
 
 
@@ -67,6 +68,7 @@ const layout = () => {
         <Stack.Screen name="Karnali" component ={Karnali} />
         <Stack.Screen name="Sudurpashchim" component ={Sudurpashchim} />
         <Stack.Screen name="Logout" component ={LogoutScreen} />
+        <Stack.Screen name='Feedback' component={FeedbackScreen}/>
         {/* </>
       ) : (
         <> */}
