@@ -17,7 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import FeedbackScreen from '../screens/FeedbackScreen';
 
 import FeedbackAndGrivanceScreen from '../screens/FeedbackAndGrivanceScreen'
-
+import UserProfile from '../screens/userProfile';
 
 
 const layout = () => {
@@ -88,6 +88,7 @@ const layout = () => {
             component={FeedbackAndGrivanceScreen} 
             options={({ route }) => ({ title: `${route.params.districtName} Engagement` })} 
         />
+        <Stack.Screen name="UserProfile" component={UserProfile}/>
         </>
 
 
