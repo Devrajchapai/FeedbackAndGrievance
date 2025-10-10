@@ -1,20 +1,22 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
-import LoginScreen from '../screens/LoginScreen'
-import SignupScreen from '../screens/SignupScreen';
-import LogoutScreen from '../screens/LogoutScreen';
-import Bagmati from '../screens/Bagmati';
-import Koshi from '../screens/Koshi';
-import Gandaki from '../screens/Gandaki';
-import Madhesh from '../screens/Madhesh';
-import Lumbini from '../screens/Lumbini';
-import Karnali from '../screens/Karnali';
-import Sudurpashchim from '../screens/Sudurpashchim';
+import LoginScreen from '../screens/credentials/LoginScreen'
+import SignupScreen from '../screens/credentials/SignupScreen';
+import LogoutScreen from '../screens/credentials/LogoutScreen';
+import Bagmati from '../screens/provience/Bagmati'
+import Koshi from '../screens/provience/Koshi';
+import Gandaki from '../screens/provience/Gandaki';
+import Madhesh from '../screens/provience/Madhesh';
+import Lumbini from '../screens/provience/Lumbini';
+import Karnali from '../screens/provience/Karnali';
+import Sudurpashchim from '../screens/provience/Sudurpashchim';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import FeedbackScreen from '../screens/FeedbackScreen';
+
+import FeedbackAndGrivanceScreen from '../screens/FeedbackAndGrivanceScreen'
 
 
 
@@ -59,7 +61,7 @@ const layout = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {/* {isLoggedIn? (
         <> */}
-        <Stack.Screen name="HomeScreen" component={HomeScreen} />
+        {/* <Stack.Screen name="HomeScreen" component={HomeScreen} />
         <Stack.Screen name="Bagmati" component ={Bagmati} />
         <Stack.Screen name="Gandaki" component ={Gandaki} />
         <Stack.Screen name="Koshi" component ={Koshi} />
@@ -67,15 +69,28 @@ const layout = () => {
         <Stack.Screen name="Lumbini" component ={Lumbini} />
         <Stack.Screen name="Karnali" component ={Karnali} />
         <Stack.Screen name="Sudurpashchim" component ={Sudurpashchim} />
-        <Stack.Screen name="Logout" component ={LogoutScreen} />
-        <Stack.Screen name='Feedback' component={FeedbackScreen}/>
+        <Stack.Screen name="Logout" component ={LogoutScreen} /> */}
         {/* </>
       ) : (
         <> */}
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignupScreen} />
+          {/* <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} /> */}
         {/* </>
       )} */}
+
+
+      {/* <Stack.Screen name='Feedback' component={FeedbackScreen}/>
+      <Stack.Screen name = 'Grievance' component={GrievanceScreen}/> */}
+      <>
+       <Stack.Screen name="Koshi" component ={Koshi} />
+      <Stack.Screen 
+            name="FeedbackAndGrivanceScreen" 
+            component={FeedbackAndGrivanceScreen} 
+            options={({ route }) => ({ title: `${route.params.districtName} Engagement` })} 
+        />
+        </>
+
+
     </Stack.Navigator>
   )
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { register } from '../src/api';
+import { register } from '../../src/api';
 
 const SignupScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');

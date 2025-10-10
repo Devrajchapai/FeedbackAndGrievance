@@ -8,6 +8,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+ 
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -19,6 +20,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+ 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -42,6 +44,7 @@ api.interceptors.response.use(
   }
 );
 
+ 
 export const login = async (email, password) => {
   try {
     const response = await axios.post(`${BASE_URL}token/`, { username: email, password });
@@ -54,7 +57,8 @@ export const login = async (email, password) => {
   }
 };
 
-export const signup = async (userData) => {
+ 
+export const register = async (email, password, confirmPassword) => {
   try {
     const response = await axios.post(`${BASE_URL}register/`, userData);
     return response.data;
@@ -63,6 +67,7 @@ export const signup = async (userData) => {
   }
 };
 
+ 
 export const logout = async () => {
   try {
     await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
@@ -72,7 +77,8 @@ export const logout = async () => {
   }
 };
 
-export const getStates = async () => {
+ 
+export const getProvinces = async () => {
   try {
     const response = await api.get('states/');
     return response.data;
@@ -81,6 +87,7 @@ export const getStates = async () => {
   }
 };
 
+ 
 export const getMunicipalities = async (stateId) => {
   try {
     const url = stateId ? `municipalities/?state=${stateId}` : 'municipalities/';
