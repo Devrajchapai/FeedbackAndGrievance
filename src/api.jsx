@@ -12,6 +12,7 @@ const api = axios.create({
   timeout: 30000, // Increased timeout to 30 seconds
 });
 
+ 
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('authToken');
@@ -27,6 +28,7 @@ api.interceptors.request.use(
   }
 );
 
+ 
 api.interceptors.response.use(
   (response) => {
     console.log('Response:', response.status, response.data);
@@ -43,6 +45,7 @@ api.interceptors.response.use(
   }
 );
 
+ 
 export const login = async (email, password) => {
   try {
     const response = await api.post('token/', { username: email, password });
@@ -55,6 +58,7 @@ export const login = async (email, password) => {
   }
 };
 
+ 
 export const register = async (email, password, confirmPassword) => {
   try {
     const response = await api.post('register/', { email, password1: password, password2: confirmPassword });
@@ -67,10 +71,12 @@ export const register = async (email, password, confirmPassword) => {
   }
 };
 
+ 
 export const logout = async () => {
   await AsyncStorage.removeItem('authToken');
 };
 
+ 
 export const getProvinces = async () => {
   try {
     const response = await api.get('provinces/');
@@ -81,6 +87,7 @@ export const getProvinces = async () => {
   }
 };
 
+ 
 export const getMunicipalities = async (stateId) => {
   try {
     const response = await api.get(`municipalities/?state=${stateId}`);
@@ -91,6 +98,7 @@ export const getMunicipalities = async (stateId) => {
   }
 };
 
+ 
 export const submitFeedback = async (municipalityId, departmentId, rating, comment) => {
   try {
     const response = await api.post(`municipalities/${municipalityId}/departments/${departmentId}/feedback/`, { rating, comment, municipality: municipalityId });
@@ -101,6 +109,7 @@ export const submitFeedback = async (municipalityId, departmentId, rating, comme
   }
 };
 
+ 
 export const submitGrievance = async (municipalityId, departmentId, title, description) => {
   try {
     const response = await api.post(`municipalities/${municipalityId}/departments/${departmentId}/grievance/`, { title, description, municipality: municipalityId });
@@ -110,3 +119,5 @@ export const submitGrievance = async (municipalityId, departmentId, title, descr
     throw error;
   }
 };
+
+ 
