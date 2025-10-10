@@ -217,7 +217,7 @@ const districtsData = [
   },
 ];
 
-const Lumbini = () => {
+const Lumbini = ({navigation}) => {
   const renderDistrictCard = ({ item }) => (
     <TouchableOpacity
           onPress={() => {
@@ -225,6 +225,7 @@ const Lumbini = () => {
             navigation.navigate("FeedbackAndGrivanceScreen", {
               districtName: item.name,
               municipalities: item.municipalities, // Pass the new data
+              state: 'Lumbini'
             });
           }}
         >

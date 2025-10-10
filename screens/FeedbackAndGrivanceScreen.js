@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, View, FlatList, ScrollView, Alert, Image } from 'react-native';
-import { Avatar, Card, Text, Button, Modal, Portal, TextInput, Divider, IconButton, Provider, Chip } from 'react-native-paper'; 
+import { Avatar, Card, Text, Button, Modal, Portal, TextInput, Divider, IconButton, Provider, Chip } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 import { submitFeedback, submitGrievance, getGrievances, getMunicipalities, getUserProfile } from '../src/api';
@@ -9,14 +9,14 @@ import { submitFeedback, submitGrievance, getGrievances, getMunicipalities, getU
 const DEPARTMENTS = ['Administration', 'Engineering', 'Education', 'Health', 'Finance', 'Local Governance'];
 const GRIEVANCE_STATUSES = ['Open', 'In Progress', 'Resolved', 'Closed'];
 
-// Initial dummy data for display - UPDATED to include 'department' and 'imageUri'
+// Initial dummy data for display
 const initialFeedback = [
-    { id: 'f1', municipality: 'Kamalamai Municipality', rating: 5, comment: 'Excellent waste collection service this month.', date: '2025-09-01', department: 'Administration', imageUri: null },
-    { id: 'f2', municipality: 'Dudhauli Municipality', rating: 4, comment: 'Pothole repair was quick and effective.', date: '2025-09-15', department: 'Engineering', imageUri: null },
+    { id: 'f1', municipality: 'Kamalamai Municipality', rating: 5, comment: 'Excellent waste collection service this month.', date: '2025-09-01', department: 'Administration', imageUri: null, state: 'Bagmati' },
+    { id: 'f2', municipality: 'Dudhauli Municipality', rating: 4, comment: 'Pothole repair was quick and effective.', date: '2025-09-15', department: 'Engineering', imageUri: null, state: 'Bagmati' },
 ];
 
 const initialGrievance = [
-    { id: 'g1', title: 'Street Light Outage', description: 'Street light broken on main road near Ward 2 office.', status: 'In Progress', date: '2025-10-01', department: 'Engineering', imageUri: 'https://picsum.photos/seed/grievance1/200/300' },
+    { id: 'g1', title: 'Street Light Outage', description: 'Street light broken on main road near Ward 2 office.', status: 'In Progress', date: '2025-10-01', department: 'Engineering', imageUri: 'https://picsum.photos/seed/grievance1/200/300', state: 'Bagmati' },
 ];
 
 // --- Shared Utility Components ---
@@ -38,8 +38,7 @@ const StarRating = ({ rating }) => (
 // --- Main Component ---
 const FeedbackAndGrivanceScreen = ({ navigation }) => {
     const route = useRoute();
-    // Retrieve dynamic data from the district screens
-    const { districtName, municipalities: initialMunicipalities, states: initialStates = [] } = route.params || { districtName: 'District', municipalities: [], states: [] };
+    const { districtName, municipalities: initialMunicipalities, state } = route.params || { districtName: 'District', municipalities: [], state: '' };
 
     const [activeTab, setActiveTab] = useState('Feedback');
     const [feedbackList, setFeedbackList] = useState(initialFeedback);
@@ -53,7 +52,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
     const [feedbackRating, setFeedbackRating] = useState(0);
     const [feedbackDepartment, setFeedbackDepartment] = useState(DEPARTMENTS[0]);
     const [feedbackImageUri, setFeedbackImageUri] = useState(null);
-    const [feedbackSelectedState, setFeedbackSelectedState] = useState(initialStates.length > 0 ? initialStates[0] : null); // NEW: State selector for feedback
 
     // Grievance Modal State
     const [isGrievanceVisible, setIsGrievanceVisible] = useState(false);
@@ -61,14 +59,11 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
     const [grievanceDescription, setGrievanceDescription] = useState('');
     const [grievanceDepartment, setGrievanceDepartment] = useState(DEPARTMENTS[0]);
     const [grievanceImageUri, setGrievanceImageUri] = useState(null);
-    const [grievanceSelectedState, setGrievanceSelectedState] = useState(initialStates.length > 0 ? initialStates[0] : null); // NEW: State selector for grievance
 
     // Selector Modal State
     const [isMunicipalitySelectorVisible, setIsMunicipalitySelectorVisible] = useState(false);
     const [isFeedbackDepartmentSelectorVisible, setIsFeedbackDepartmentSelectorVisible] = useState(false);
     const [isGrievanceDepartmentSelectorVisible, setIsGrievanceDepartmentSelectorVisible] = useState(false);
-    const [isStateSelectorVisible, setIsStateSelectorVisible] = useState(false); // NEW: State selector modal
-    const [currentModalForState, setCurrentModalForState] = useState(null); // NEW: Track which modal is using state selector
 
     // Effect to update selected municipality when the list changes
     useEffect(() => {
@@ -77,7 +72,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         }
     }, [initialMunicipalities, selectedMunicipality]);
 
-    // NEW: Effect to fetch user profile and grievances for officials
+    // Effect to fetch user profile and grievances for officials
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -100,9 +95,8 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         setFeedbackRating(0);
         setFeedbackDepartment(DEPARTMENTS[0]);
         setFeedbackImageUri(null);
-        setFeedbackSelectedState(initialStates.length > 0 ? initialStates[0] : null);
         setIsFeedbackVisible(false);
-    }
+    };
     
     const showGrievanceModal = () => setIsGrievanceVisible(true);
     const hideGrievanceModal = () => {
@@ -110,17 +104,10 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         setGrievanceDescription('');
         setGrievanceDepartment(DEPARTMENTS[0]);
         setGrievanceImageUri(null);
-        setGrievanceSelectedState(initialStates.length > 0 ? initialStates[0] : null);
         setIsGrievanceVisible(false);
-    }
-
-    // NEW: Function to show state selector for a specific modal
-    const showStateSelector = (modal) => {
-        setCurrentModalForState(modal);
-        setIsStateSelectorVisible(true);
     };
 
-    // NEW: Function to simulate image picking
+    // Function to simulate image picking
     const pickImage = (setImageUri) => {
         Alert.alert(
             "Add Image (Simulated)",
@@ -137,11 +124,11 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                 }
             ],
             "plain-text",
-            "https://picsum.photos/200/300" // Default URL for convenience
+            "https://picsum.photos/200/300"
         );
     };
 
-    // UPDATED: Submit feedback to backend
+    // Submit feedback to backend
     const handleSubmitFeedback = async () => {
         if (feedbackRating === 0 || !feedbackComment || !selectedMunicipality || !feedbackDepartment) {
             Alert.alert("Missing Information", "Please provide a rating, select a municipality and department, and enter a comment.");
@@ -152,6 +139,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
             const feedbackData = {
                 rating: feedbackRating,
                 comment: feedbackComment,
+                state: state,
             };
             await submitFeedback(selectedMunicipality, feedbackDepartment, feedbackData, feedbackImageUri ? { uri: feedbackImageUri, type: 'image/jpeg', fileName: 'image.jpg' } : null);
             Alert.alert('Success', 'Feedback submitted successfully');
@@ -163,6 +151,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                 date: new Date().toISOString().split('T')[0],
                 department: feedbackDepartment,
                 imageUri: feedbackImageUri,
+                state: state,
             }, ...feedbackList]);
         } catch (error) {
             Alert.alert('Error', error.message || 'Failed to submit feedback');
@@ -170,7 +159,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         hideFeedbackModal();
     };
 
-    // UPDATED: Submit grievance to backend
+    // Submit grievance to backend
     const handleSubmitGrievance = async () => {
         if (!grievanceTitle || !grievanceDescription || !selectedMunicipality || !grievanceDepartment) {
             Alert.alert("Missing Information", "Please fill all fields and select a department.");
@@ -181,6 +170,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
             const grievanceData = {
                 title: grievanceTitle,
                 description: grievanceDescription,
+                state: state,
             };
             await submitGrievance(selectedMunicipality, grievanceDepartment, grievanceData, grievanceImageUri ? { uri: grievanceImageUri, type: 'image/jpeg', fileName: 'image.jpg' } : null);
             Alert.alert('Success', 'Grievance submitted successfully');
@@ -192,56 +182,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         hideGrievanceModal();
     };
 
-    // UPDATED: Filter municipalities by selected state
-    const filteredMunicipalities = initialMunicipalities.filter(m => {
-        if (!feedbackSelectedState && !grievanceSelectedState) return true;
-        const currentState = currentModalForState === 'feedback' ? feedbackSelectedState : grievanceSelectedState;
-        return m.state === currentState;
-    });
-
-    // UPDATED renderFeedbackItem to show Image
-    const renderFeedbackItem = ({ item }) => (
-        <Card mode="outlined" style={styles.listItem}>
-            <Card.Content>
-                <View style={styles.itemHeader}>
-                    <Text style={styles.itemTitle}>{item.municipality}</Text>
-                    <Chip style={styles.departmentChip} mode="outlined" textStyle={{ fontSize: 10 }}>{item.department}</Chip> 
-                </View>
-                <StarRating rating={item.rating} />
-                <Text style={styles.itemDate}>Submitted on: {item.date}</Text>
-                <Text variant="bodyMedium" style={{ marginBottom: item.imageUri ? 10 : 0 }}>{item.comment}</Text>
-                {item.imageUri && (
-                    <Card style={styles.imagePreviewContainer}>
-                        <Text variant="labelSmall" style={styles.imageLabel}>Attached Photo:</Text>
-                        <Image source={{ uri: item.imageUri }} style={styles.itemImage} resizeMode="cover" />
-                    </Card>
-                )}
-            </Card.Content>
-        </Card>
-    );
-
-    // UPDATED renderGrievanceItem to show Image
-    const renderGrievanceItem = ({ item }) => (
-        <Card mode="outlined" style={styles.listItem}>
-            <Card.Content>
-                <View style={styles.itemHeader}>
-                    <Text style={styles.itemTitle}>{item.title}</Text>
-                    <Chip style={styles.departmentChip} mode="outlined" textStyle={{ fontSize: 10 }}>{item.department}</Chip>
-                </View>
-                <Text style={styles.itemDate}>
-                    Status: <Text style={{ color: item.status === 'Resolved' ? 'green' : (item.status === 'Open' ? 'red' : 'orange') }}>{item.status}</Text>
-                </Text>
-                <Text variant="bodyMedium" style={{ marginBottom: item.imageUri ? 10 : 0 }}>{item.description}</Text>
-                {item.imageUri && (
-                    <Card style={styles.imagePreviewContainer}>
-                        <Text variant="labelSmall" style={styles.imageLabel}>Attached Proof:</Text>
-                        <Image source={{ uri: item.imageUri }} style={styles.itemImage} resizeMode="cover" />
-                    </Card>
-                )}
-            </Card.Content>
-        </Card>
-    );
-
+    // Render selector list for municipalities and departments
     const renderSelectorList = (list, selectedValue, onSelect, hideModal) => (
         <ScrollView style={styles.selectorContent}>
             {list.map((value, index) => (
@@ -261,11 +202,60 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         </ScrollView>
     );
 
+    // NEW: Render Feedback Item
+    const renderFeedbackItem = ({ item }) => (
+        <Card style={styles.listItem}>
+            <Card.Content>
+                <View style={styles.itemHeader}>
+                    <Text style={styles.itemTitle}>{item.municipality}</Text>
+                    <Chip style={styles.departmentChip}>{item.department}</Chip>
+                </View>
+                <Text style={styles.itemDate}>State: {item.state} | {item.date}</Text>
+                <StarRating rating={item.rating} />
+                <Text>{item.comment}</Text>
+                {item.imageUri && (
+                    <View style={styles.imagePreviewContainer}>
+                        <Text style={styles.imageLabel}>Attached Image:</Text>
+                        <Image
+                            source={{ uri: item.imageUri }}
+                            style={styles.itemImage}
+                            resizeMode="cover"
+                        />
+                    </View>
+                )}
+            </Card.Content>
+        </Card>
+    );
+
+    // NEW: Render Grievance Item
+    const renderGrievanceItem = ({ item }) => (
+        <Card style={styles.listItem}>
+            <Card.Content>
+                <View style={styles.itemHeader}>
+                    <Text style={styles.itemTitle}>{item.title}</Text>
+                    <Chip style={styles.departmentChip}>{item.department}</Chip>
+                </View>
+                <Text style={styles.itemDate}>State: {item.state} | {item.date}</Text>
+                <Text style={{ marginBottom: 8, color: '#555' }}>Status: {item.status}</Text>
+                <Text>{item.description}</Text>
+                {item.imageUri && (
+                    <View style={styles.imagePreviewContainer}>
+                        <Text style={styles.imageLabel}>Attached Image:</Text>
+                        <Image
+                            source={{ uri: item.imageUri }}
+                            style={styles.itemImage}
+                            resizeMode="cover"
+                        />
+                    </View>
+                )}
+            </Card.Content>
+        </Card>
+    );
+
     return (
         <SafeAreaProvider>
             <Provider>
                 <SafeAreaView style={styles.container}>
-                    
                     <Text variant="headlineSmall" style={styles.title}>
                         {districtName} Feedback Hub
                     </Text>
@@ -324,34 +314,30 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                 {/* --- Feedback Submission Modal --- */}
                 <Portal>
                     <Modal 
-                        visible={isFeedbackVisible && !isMunicipalitySelectorVisible && !isFeedbackDepartmentSelectorVisible && !isStateSelectorVisible} 
+                        visible={isFeedbackVisible && !isMunicipalitySelectorVisible && !isFeedbackDepartmentSelectorVisible} 
                         onDismiss={hideFeedbackModal} 
                         contentContainerStyle={styles.modalContainer}
                     >
                         <View style={styles.modalContent}>
                             <Text variant="titleLarge" style={styles.modalTitle}>Submit Feedback for {districtName}</Text>
                             
-                            {/* NEW: State Selector for Feedback */}
                             <TextInput
                                 label="State"
-                                value={feedbackSelectedState ? feedbackSelectedState.name : 'Select State'}
+                                value={state}
                                 mode="outlined"
                                 style={styles.fixedInput}
-                                right={<TextInput.Icon icon="menu-down" onPress={() => showStateSelector('feedback')} />}
                                 editable={false}
                             />
 
-                            {/* Municipality Selector - UPDATED to use filteredMunicipalities */}
                             <TextInput
                                 label="Municipality"
-                                value={selectedMunicipality ? selectedMunicipality.name : 'Select Municipality'}
+                                value={selectedMunicipality}
                                 mode="outlined"
                                 style={styles.fixedInput}
                                 right={<TextInput.Icon icon="menu-down" onPress={() => setIsMunicipalitySelectorVisible(true)} />}
                                 editable={false}
                             />
                             
-                            {/* Department Selector for Feedback */}
                             <TextInput
                                 label="Department to review"
                                 value={feedbackDepartment}
@@ -361,7 +347,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                                 editable={false}
                             />
 
-                            {/* Rating */}
                             <Text style={styles.ratingText}>Rate the services:</Text>
                             <View style={styles.ratingRow}>
                                 {[1, 2, 3, 4, 5].map((star) => (
@@ -375,7 +360,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                                 ))}
                             </View>
 
-                            {/* Comment Input */}
                             <TextInput
                                 label="Your Comment"
                                 placeholder="Share your experience and suggestions..."
@@ -387,7 +371,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                                 style={{ marginBottom: 20 }}
                             />
                             
-                            {/* Image Upload Option for Feedback */}
                             <View style={styles.imageUploadRow}>
                                 <Button 
                                     mode="outlined" 
@@ -415,7 +398,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                     </Modal>
                 </Portal>
                 
-                {/* --- Municipality Selector Modal --- */}
                 <Portal>
                     <Modal 
                         visible={isMunicipalitySelectorVisible && (isFeedbackVisible || isGrievanceVisible)} 
@@ -424,7 +406,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                     >
                         <Text variant="titleMedium" style={styles.modalTitle}>Select Municipality</Text>
                         {renderSelectorList(
-                            filteredMunicipalities, 
+                            initialMunicipalities, 
                             selectedMunicipality, 
                             setSelectedMunicipality, 
                             () => setIsMunicipalitySelectorVisible(false)
@@ -432,7 +414,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                     </Modal>
                 </Portal>
 
-                {/* Department Selector Modal for Feedback */}
                 <Portal>
                     <Modal 
                         visible={isFeedbackDepartmentSelectorVisible && isFeedbackVisible} 
@@ -449,60 +430,32 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                     </Modal>
                 </Portal>
 
-                {/* NEW: State Selector Modal */}
                 <Portal>
                     <Modal 
-                        visible={isStateSelectorVisible && (isFeedbackVisible || isGrievanceVisible)} 
-                        onDismiss={() => setIsStateSelectorVisible(false)} 
-                        contentContainerStyle={styles.selectorModalContainer}
-                    >
-                        <Text variant="titleMedium" style={styles.modalTitle}>Select State</Text>
-                        {renderSelectorList(
-                            initialStates, 
-                            currentModalForState === 'feedback' ? feedbackSelectedState : grievanceSelectedState, 
-                            (value) => {
-                                if (currentModalForState === 'feedback') {
-                                    setFeedbackSelectedState(value);
-                                } else {
-                                    setGrievanceSelectedState(value);
-                                }
-                            },
-                            () => setIsStateSelectorVisible(false)
-                        )}
-                    </Modal>
-                </Portal>
-
-                {/* --- Grievance Submission Modal --- */}
-                <Portal>
-                    <Modal 
-                        visible={isGrievanceVisible && !isMunicipalitySelectorVisible && !isGrievanceDepartmentSelectorVisible && !isStateSelectorVisible} 
+                        visible={isGrievanceVisible && !isMunicipalitySelectorVisible && !isGrievanceDepartmentSelectorVisible} 
                         onDismiss={hideGrievanceModal} 
                         contentContainerStyle={styles.modalContainer}
                     >
                         <View style={styles.modalContent}>
                             <Text variant="titleLarge" style={styles.modalTitle}>Report Grievance for {districtName}</Text>
                             
-                            {/* NEW: State Selector for Grievance */}
                             <TextInput
                                 label="State"
-                                value={grievanceSelectedState ? grievanceSelectedState.name : 'Select State'}
+                                value={state}
                                 mode="outlined"
                                 style={styles.fixedInput}
-                                right={<TextInput.Icon icon="menu-down" onPress={() => showStateSelector('grievance')} />}
                                 editable={false}
                             />
 
-                            {/* Municipality Selector - UPDATED to use filteredMunicipalities */}
                             <TextInput
                                 label="Municipality"
-                                value={selectedMunicipality ? selectedMunicipality.name : 'Select Municipality'}
+                                value={selectedMunicipality}
                                 mode="outlined"
                                 style={styles.fixedInput}
                                 right={<TextInput.Icon icon="menu-down" onPress={() => setIsMunicipalitySelectorVisible(true)} />}
                                 editable={false}
                             />
                             
-                            {/* Department Selector */}
                             <TextInput
                                 label="Relevant Department"
                                 value={grievanceDepartment}
@@ -512,7 +465,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                                 editable={false}
                             />
 
-                            {/* Title Input */}
                             <TextInput
                                 label="Grievance Title (e.g., Water Shortage, Road Damage)"
                                 value={grievanceTitle}
@@ -521,7 +473,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                                 style={styles.fixedInput}
                             />
                             
-                            {/* Description Input */}
                             <TextInput
                                 label="Detailed Description"
                                 placeholder="Provide location, date, and other relevant details..."
@@ -533,7 +484,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                                 style={{ marginBottom: 20 }}
                             />
                             
-                            {/* Image Upload Option for Grievance */}
                             <View style={styles.imageUploadRow}>
                                 <Button 
                                     mode="outlined" 
@@ -561,7 +511,6 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                     </Modal>
                 </Portal>
 
-                {/* --- Department Selector Modal for Grievance --- */}
                 <Portal>
                     <Modal 
                         visible={isGrievanceDepartmentSelectorVisible && isGrievanceVisible} 
@@ -582,6 +531,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
     );
 };
 
+// Styles remain the same
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -621,7 +571,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: 16,
-        paddingBottom: 20, 
+        paddingBottom: 20,
     },
     listItem: {
         marginVertical: 6,
@@ -708,7 +658,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'flex-start',
         marginBottom: 16,
-        marginLeft: -12, 
+        marginLeft: -12,
     },
     imageUploadRow: {
         flexDirection: 'row',
@@ -727,8 +677,8 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
     },
     listTitle: {
-        marginTop: 20, 
-        marginBottom: 10, 
+        marginTop: 20,
+        marginBottom: 10,
         fontWeight: 'bold',
         color: '#444',
         paddingHorizontal: 16,

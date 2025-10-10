@@ -222,7 +222,7 @@ const districtsData = [
   },
 ];
 
-const Madhesh = () => {
+const Madhesh = ({navigation}) => {
   const renderDistrictCard = ({ item }) => (
     <TouchableOpacity
           onPress={() => {
@@ -230,6 +230,7 @@ const Madhesh = () => {
             navigation.navigate("FeedbackAndGrivanceScreen", {
               districtName: item.name,
               municipalities: item.municipalities, // Pass the new data
+              state: 'Madhesh'
             });
           }}
         >

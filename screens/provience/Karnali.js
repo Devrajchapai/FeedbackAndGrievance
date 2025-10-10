@@ -192,6 +192,7 @@ const Karnali = ({ navigation }) => {
             navigation.navigate("FeedbackAndGrivanceScreen", {
               districtName: item.name,
               municipalities: item.municipalities, // Pass the new data
+              state: 'Karnali'
             });
           }}
         >

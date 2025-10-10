@@ -288,6 +288,7 @@ const Koshi = ({ navigation }) => {
         navigation.navigate("FeedbackAndGrivanceScreen", {
           districtName: item.name,
           municipalities: item.municipalities, // Pass the new data
+          state: 'Koshi'
         });
       }}
     >
