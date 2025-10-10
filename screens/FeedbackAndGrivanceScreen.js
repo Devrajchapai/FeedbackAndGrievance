@@ -410,6 +410,7 @@ const styles = StyleSheet.create({
         margin: 20,
         borderRadius: 12,
         maxHeight: '90%',
+        zIndex: 1000,
     },
     modalContent: {
         padding: 10,
