@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
-import { StyleSheet, TouchableOpacity, View, FlatList, ScrollView, Alert } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, FlatList, ScrollView, Alert, Image } from 'react-native';
 
 // Added Image and Chip for simulated image preview
-import { Avatar, Card, Text, Button, Modal, Portal, TextInput, Divider, IconButton, Provider, Chip, Image } from 'react-native-paper'; 
+import { Avatar, Card, Text, Button, Modal, Portal, TextInput, Divider, IconButton, Provider, Chip } from 'react-native-paper'; 
 
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
