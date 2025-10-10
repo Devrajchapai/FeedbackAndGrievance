@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import FeedbackScreen from '../screens/FeedbackScreen';
+
 
 import FeedbackAndGrivanceScreen from '../screens/FeedbackAndGrivanceScreen'
 import UserProfile from '../screens/userProfile';
@@ -59,9 +59,9 @@ const layout = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* {isLoggedIn? (
-        <> */}
-        {/* <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      {/* {isLoggedIn? ( */}
+        <> 
+        <Stack.Screen name="HomeScreen" component={HomeScreen} />
         <Stack.Screen name="Bagmati" component ={Bagmati} />
         <Stack.Screen name="Gandaki" component ={Gandaki} />
         <Stack.Screen name="Koshi" component ={Koshi} />
@@ -69,31 +69,27 @@ const layout = () => {
         <Stack.Screen name="Lumbini" component ={Lumbini} />
         <Stack.Screen name="Karnali" component ={Karnali} />
         <Stack.Screen name="Sudurpashchim" component ={Sudurpashchim} />
-        <Stack.Screen name="Logout" component ={LogoutScreen} /> */}
-        {/* </>
-      ) : (
-        <> */}
-          {/* <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignupScreen} /> */}
-        {/* </>
-      )} */}
-
-
-      {/* <Stack.Screen name='Feedback' component={FeedbackScreen}/>
-      <Stack.Screen name = 'Grievance' component={GrievanceScreen}/> */}
-      <>
-       <Stack.Screen name="Koshi" component ={Koshi} />
-      <Stack.Screen 
+        <Stack.Screen 
             name="FeedbackAndGrivanceScreen" 
             component={FeedbackAndGrivanceScreen} 
             options={({ route }) => ({ title: `${route.params.districtName} Engagement` })} 
         />
         <Stack.Screen name="UserProfile" component={UserProfile}/>
+        <Stack.Screen name="Logout" component ={LogoutScreen} /> 
         </>
+      {/* ) : (
+        <> 
+           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+         </>
+      ) 
 
 
+    
+      
+    } */}
     </Stack.Navigator>
+  
   )
 }
-
 export default layout;
