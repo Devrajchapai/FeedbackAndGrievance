@@ -20,7 +20,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
- 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -44,29 +43,32 @@ api.interceptors.response.use(
   }
 );
 
- 
 export const login = async (email, password) => {
   try {
-    const response = await axios.post(`${BASE_URL}token/`, { username: email, password });
+    const payload = { username: email, password };
+    console.log('Login payload:', JSON.stringify(payload, null, 2)); // Log payload
+    const response = await api.post('token/', payload);
     const { access, refresh } = response.data;
     await AsyncStorage.setItem('accessToken', access);
     await AsyncStorage.setItem('refreshToken', refresh);
+    console.log('Login successful, tokens saved');
     return response.data;
   } catch (error) {
-    throw error.response?.data?.detail || 'Login failed';
+    console.log('Login error:', JSON.stringify(error.response?.data, null, 2)); // Log detailed error
+    throw error.response?.data || { detail: 'Login failed. Please check your email and password.' };
   }
 };
 
  
-export const register = async (email, password, confirmPassword) => {
+export const register = async (userData) => {
   try {
-    const response = await axios.post(`${BASE_URL}register/`, userData);
+    const response = await api.post('register/', userData);
     return response.data;
   } catch (error) {
-    throw error.response?.data || 'Signup failed';
+    console.log('Signup error:', error.response?.data); // Log backend error for debugging
+    throw error.response?.data || { message: 'Signup failed. Please check your input and try again.' };
   }
 };
-
  
 export const logout = async () => {
   try {
