@@ -12,36 +12,40 @@ const SignupScreen = ({ navigation }) => {
   const [passwordVisibility, setPasswordVisible] = useState(false);
 
   const handleSignup = async () => {
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!');
-      return;
+  if (password !== confirmPassword) {
+    alert("Passwords do not match!");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/register/", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username,
+        email: email,
+        password1: password,
+        password2: confirmPassword
+
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Signup successful!");
+      navigation.replace("HomeScreenhome");
+    } else {
+      alert("Signup failed: " + (data.message || JSON.stringify(data)));
     }
 
-    try {
-      const userData = {
-        username,
-        email,
-        password1: password,
-        password2: confirmPassword,
-      };
-      await register(userData);
-      alert('Signup successful!');
-      navigation.replace('HomeScreen'); // Fixed navigation target
-    } catch (error) {
-      // Parse backend errors
-      let errorMessage = 'Signup failed. Please try again.';
-      if (error && typeof error === 'object') {
-        if (error.email) errorMessage = `Email: ${error.email.join(', ')}`;
-        else if (error.password) errorMessage = `Password: ${error.password.join(', ')}`;
-        else if (error.password1) errorMessage = `Password: ${error.password1.join(', ')}`;
-        else if (error.password2) errorMessage = `Password: ${error.password2.join(', ')}`;
-        else if (error.non_field_errors) errorMessage = error.non_field_errors.join(', ');
-        else if (error.message) errorMessage = error.message;
-      }
-      alert(`Signup failed: ${errorMessage}`);
-      console.log('Signup error details:', error); // Log for debugging
-    }
-  };
+  } catch (err) {
+    console.log("Error: " + err);
+    alert("Something went wrong, try again later.");
+  }
+};
 
   return (
     <SafeAreaProvider>
@@ -55,15 +59,7 @@ const SignupScreen = ({ navigation }) => {
             <Text style={{ fontSize: 30, marginLeft: 18, color: 'blue' }}>
               Feedback and Redressal
             </Text>
-            <View
-              style={{
-                borderBottomColor: 'blue',
-                borderBottomWidth: 4,
-                borderRadius: 10,
-                marginLeft: 20,
-                marginRight: 100,
-              }}
-            />
+            <View style={{ borderBottomColor: 'blue', borderBottomWidth: 4, borderRadius: 10, marginLeft: 20, marginRight: 100 }} />
             <Text style={{ fontSize: 20, marginLeft: 18, marginTop: 20 }}>
               Sign Up With Email
             </Text>
@@ -91,12 +87,7 @@ const SignupScreen = ({ navigation }) => {
               mode="outlined"
               style={{ marginLeft: 18, marginRight: 18, marginTop: 18 }}
               theme={{ colors: { primary: 'blue' } }}
-              right={
-                <TextInput.Icon
-                  icon={passwordVisibility ? 'eye-off' : 'eye'}
-                  onPress={() => setPasswordVisible(!passwordVisibility)}
-                />
-              }
+              right={<TextInput.Icon icon={passwordVisibility ? 'eye-off' : 'eye'} onPress={() => setPasswordVisible(!passwordVisibility)} />}
             />
             <TextInput
               label="Confirm Password"
@@ -106,12 +97,7 @@ const SignupScreen = ({ navigation }) => {
               mode="outlined"
               style={{ marginLeft: 18, marginRight: 18, marginTop: 18 }}
               theme={{ colors: { primary: 'blue' } }}
-              right={
-                <TextInput.Icon
-                  icon={passwordVisibility ? 'eye-off' : 'eye'}
-                  onPress={() => setPasswordVisible(!passwordVisibility)}
-                />
-              }
+              right={<TextInput.Icon icon={passwordVisibility ? 'eye-off' : 'eye'} onPress={() => setPasswordVisible(!passwordVisibility)} />}
             />
             <Button
               icon="account-plus"

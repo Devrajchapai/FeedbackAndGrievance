@@ -3,14 +3,15 @@ import { View, Text, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LogoutScreen({ navigation }) {
-  useEffect(() => {
+  useEffect(async() => {
     const logout = async () => {
       try {
         // remove token from storage
         await AsyncStorage.removeItem("accessToken");
-
+        console.log("test1")
         // navigate back to login
         navigation.replace('Login')
+        console.log('test2')
       } catch (e) {
         console.log("Error logging out:", e);
       }

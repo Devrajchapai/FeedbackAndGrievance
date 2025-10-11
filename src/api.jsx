@@ -63,6 +63,18 @@ export const login = async (email, password) => {
 export const register = async (userData) => {
   try {
     const response = await api.post('register/', userData);
+    const data = await response.json();
+
+      if (response.ok) {
+        // ✅ Save token so layout.js sees it
+        await AsyncStorage.setItem("accessToken", data.access);
+        await AsyncStorage.setItem("refreshToken", data.refresh);
+
+        Alert.alert("Signup successful!");
+        navigation.replace("HomeScreen"); // redirect to home
+      } else {
+        Alert.alert("Login failed", data.detail || "Invalid credentials");
+      }
     return response.data;
   } catch (error) {
     console.log('Signup error:', error.response?.data); // Log backend error for debugging

@@ -9,8 +9,9 @@ import {
   TextInput, 
   Alert 
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'https://example.com/api/user/profile'; // Replace with your actual backend URL
+const API_URL = 'http://127.0.0.1:8000/api/user/profile/';
 
 const UserProfile = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -18,37 +19,70 @@ const UserProfile = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    // Simulate API call with demo data
-    setTimeout(() => {
-      const demoData = {
-        username: 'devraj_chapai',
-        email: 'devraj@example.com',
-        password: 'MySecret123',
-        DOB: '2003-06-15',
-        address: 'Pokhara, Nepal',
-        contact: '+977 9812345678',
-      };
-      setUser(demoData);
-      setLoading(false);
-    }, 1000);
+    const fetchProfile = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        if (!token) {
+          throw new Error('No access token found');
+        }
+        const response = await fetch(API_URL, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setUser(data);
+        setLoading(false);
+      } catch (error) {
+        console.log('Profile fetch error:', error.message);
+        Alert.alert('Error', 'Failed to load profile. Please try again.');
+        setLoading(false);
+      }
+    };
+    fetchProfile();
   }, []);
 
   const handleSave = async () => {
-    setIsEditing(false);
-    Alert.alert('Profile Updated', 'Your changes have been saved.');
-    // You can send updated user data to backend using fetch() here
-    // await fetch(API_URL, { method: 'PUT', body: JSON.stringify(user), ... })
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('No access token found');
+      }
+      // Filter out read-only fields
+      const { is_official, municipality_name, ...updateData } = user;
+      const response = await fetch(API_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || errorData.email?.join(', ') || 'Failed to update profile');
+      }
+      setIsEditing(false);
+      Alert.alert('Profile Updated', 'Your changes have been saved.');
+    } catch (error) {
+      console.log('Profile update error:', error.message);
+      Alert.alert('Update Failed', error.message);
+    }
   };
 
-  const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: () => navigation.replace('Logout'),
-      },
-    ]);
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+      navigation.replace('Login');
+    } catch (error) {
+      console.log('Logout error:', error.message);
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
   };
 
   if (loading) {
@@ -72,20 +106,22 @@ const UserProfile = ({ navigation }) => {
       <Text style={styles.title}>User Profile</Text>
 
       {/* Editable Fields */}
-      {Object.entries(user).map(([key, value]) => (
-        <View key={key} style={styles.inputContainer}>
-          <Text style={styles.label}>
-            {key.charAt(0).toUpperCase() + key.slice(1)}:
-          </Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.readOnlyInput]}
-            value={value}
-            editable={isEditing}
-            secureTextEntry={key === 'password'}
-            onChangeText={(text) => setUser({ ...user, [key]: text })}
-          />
-        </View>
-      ))}
+      {Object.entries(user)
+        .filter(([key]) => !['is_official', 'municipality_name'].includes(key)) // Exclude is_official and municipality_name
+        .map(([key, value]) => (
+          <View key={key} style={styles.inputContainer}>
+            <Text style={styles.label}>
+              {key.charAt(0).toUpperCase() + key.slice(1)}:
+            </Text>
+            <TextInput
+              style={[styles.input, !isEditing && styles.readOnlyInput]}
+              value={value}
+              editable={isEditing}
+              secureTextEntry={key === 'password'}
+              onChangeText={(text) => setUser({ ...user, [key]: text })}
+            />
+          </View>
+        ))}
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>

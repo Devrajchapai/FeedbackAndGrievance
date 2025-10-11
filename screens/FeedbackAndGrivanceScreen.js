@@ -3,21 +3,11 @@ import { StyleSheet, TouchableOpacity, View, FlatList, ScrollView, Alert, Image 
 import { Avatar, Card, Text, Button, Modal, Portal, TextInput, Divider, IconButton, Provider, Chip } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
-import { submitFeedback, submitGrievance, getGrievances, getMunicipalities, getUserProfile } from '../src/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // --- Static Data Definitions ---
 const DEPARTMENTS = ['Administration', 'Engineering', 'Education', 'Health', 'Finance', 'Local Governance'];
 const GRIEVANCE_STATUSES = ['Open', 'In Progress', 'Resolved', 'Closed'];
-
-// Initial dummy data for display
-const initialFeedback = [
-    { id: 'f1', municipality: 'Kamalamai Municipality', rating: 5, comment: 'Excellent waste collection service this month.', date: '2025-09-01', department: 'Administration', imageUri: null, state: 'Bagmati' },
-    { id: 'f2', municipality: 'Dudhauli Municipality', rating: 4, comment: 'Pothole repair was quick and effective.', date: '2025-09-15', department: 'Engineering', imageUri: null, state: 'Bagmati' },
-];
-
-const initialGrievance = [
-    { id: 'g1', title: 'Street Light Outage', description: 'Street light broken on main road near Ward 2 office.', status: 'In Progress', date: '2025-10-01', department: 'Engineering', imageUri: 'https://picsum.photos/seed/grievance1/200/300', state: 'Bagmati' },
-];
 
 // --- Shared Utility Components ---
 const StarRating = ({ rating }) => (
@@ -38,16 +28,17 @@ const StarRating = ({ rating }) => (
 // --- Main Component ---
 const FeedbackAndGrivanceScreen = ({ navigation }) => {
     const route = useRoute();
-    const { districtName, municipalities: initialMunicipalities, state } = route.params || { districtName: 'District', municipalities: [], state: '' };
+    const { districtName, municipalities: initialMunicipalities = [], state = '' } = route.params || {};
 
     const [activeTab, setActiveTab] = useState('Feedback');
-    const [feedbackList, setFeedbackList] = useState(initialFeedback);
-    const [grievanceList, setGrievanceList] = useState(initialGrievance);
+    const [feedbackList, setFeedbackList] = useState([]);
+    const [grievanceList, setGrievanceList] = useState([]);
     const [userProfile, setUserProfile] = useState(null);
+    const [municipalities, setMunicipalities] = useState(initialMunicipalities);
     
     // Feedback Modal State
     const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
-    const [selectedMunicipality, setSelectedMunicipality] = useState(initialMunicipalities.length > 0 ? initialMunicipalities[0] : '');
+    const [selectedMunicipality, setSelectedMunicipality] = useState('');
     const [feedbackComment, setFeedbackComment] = useState('');
     const [feedbackRating, setFeedbackRating] = useState(0);
     const [feedbackDepartment, setFeedbackDepartment] = useState(DEPARTMENTS[0]);
@@ -65,29 +56,168 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
     const [isFeedbackDepartmentSelectorVisible, setIsFeedbackDepartmentSelectorVisible] = useState(false);
     const [isGrievanceDepartmentSelectorVisible, setIsGrievanceDepartmentSelectorVisible] = useState(false);
 
-    // Effect to update selected municipality when the list changes
-    useEffect(() => {
-        if (initialMunicipalities.length > 0 && !selectedMunicipality) {
-            setSelectedMunicipality(initialMunicipalities[0]);
-        }
-    }, [initialMunicipalities, selectedMunicipality]);
 
-    // Effect to fetch user profile and grievances for officials
+    const refreshToken = async () => {
+        try {
+            const refreshToken = await AsyncStorage.getItem('refreshToken');
+            if (!refreshToken) throw new Error('No refresh token found');
+
+            const response = await fetch('http://127.0.0.1:8000/api/token/refresh/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh: refreshToken }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to refresh token');
+            }
+
+            const data = await response.json();
+            await AsyncStorage.setItem('accessToken', data.access);
+            return data.access;
+        } catch (error) {
+            console.error('Token refresh failed:', error.message);
+            Alert.alert('Session Expired', 'Please log in again.', [
+                { text: 'OK', onPress: () => navigation.navigate('LoginScreen') }, // Adjust to your login route
+            ]);
+            throw error;
+        }
+    };
+
+    // Fetch municipalities, user profile, feedback, and grievances
     useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const profile = await getUserProfile();
-                setUserProfile(profile);
-                if (profile.is_official) {
-                    const grievances = await getGrievances();
-                    setGrievanceList(grievances);
+    const fetchData = async () => {
+        try {
+            const token = await AsyncStorage.getItem('accessToken');
+            if (!token) throw new Error('No access token found');
+
+            // // Step 1: Fetch states to get ID for the passed state name (e.g., 'Bagmati')
+            // console.log('Fetching states...');
+            // const statesResponse = await fetch('http://127.0.0.1:8000/api/states/', {
+            //     method: 'GET',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         'Authorization': `Bearer ${token}`,
+            //     },
+            // });
+            // if (!statesResponse.ok) {
+            //     const errorData = await statesResponse.json();
+            //     throw new Error(`Failed to fetch states: ${JSON.stringify(errorData)}`);
+            // }
+            // const statesData = await statesResponse.json();
+            // console.log('States fetched:', statesData);
+
+            // const stateObj = statesData.find(s => s.name.toLowerCase() === state.toLowerCase()); // Case-insensitive match
+            // if (!stateObj) throw new Error(`State "${state}" not found in backend`);
+
+            // const stateId = stateObj.id;
+
+            // Step 2: Fetch municipalities filtered by state ID
+            console.log(`Fetching municipalities for state ID ${stateId}...`);
+            const municipalitiesResponse = await fetch(`http://127.0.0.1:8000/api/municipalities/?state=${stateId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            if (!municipalitiesResponse.ok) {
+                const errorData = await municipalitiesResponse.json();
+                throw new Error(`Failed to fetch municipalities: ${JSON.stringify(errorData)}`);
+            }
+            const municipalitiesData = await municipalitiesResponse.json();
+            console.log('Municipalities fetched:', municipalitiesData);
+            setMunicipalities(municipalitiesData);
+
+            if (municipalitiesData.length > 0 && !selectedMunicipality) {
+                setSelectedMunicipality(municipalitiesData[0].name);
+            }
+
+                // Fetch user profile
+                console.log('Fetching user profile...');
+                const profileResponse = await fetch('http://127.0.0.1:8000/api/user/profile/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+                if (!profileResponse.ok) {
+                    const errorData = await profileResponse.json();
+                    throw new Error(`Failed to fetch user profile: ${JSON.stringify(errorData)}`);
                 }
+                const profile = await profileResponse.json();
+                console.log('User profile fetched:', profile);
+                setUserProfile(profile);
+
+                // Fetch feedback
+                console.log('Fetching feedback...');
+                const feedbackResponse = await fetch('http://127.0.0.1:8000/api/feedback/list/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+                if (!feedbackResponse.ok) {
+                    const errorData = await feedbackResponse.json();
+                    throw new Error(`Failed to fetch feedback: ${JSON.stringify(errorData)}`);
+                }
+                const feedbackData = await feedbackResponse.json();
+                console.log('Feedback fetched:', feedbackData);
+                setFeedbackList(feedbackData.map(f => ({
+                    id: f.id.toString(),
+                    municipality: municipalitiesData.find(m => m.id === f.municipality)?.name || f.municipality_name || '',
+                    rating: f.rating,
+                    comment: f.comment,
+                    date: f.created_at ? f.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                    department: f.department,
+                    imageUri: f.image_url || null,
+                    state: f.state || state || municipalitiesData.find(m => m.id === f.municipality)?.state || '',
+                })));
+
+                // Fetch grievances
+                console.log('Fetching grievances...');
+                const grievancesResponse = await fetch('http://127.0.0.1:8000/api/grievance/list/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+                if (!grievancesResponse.ok) {
+                    const errorData = await grievancesResponse.json();
+                    throw new Error(`Failed to fetch grievances: ${JSON.stringify(errorData)}`);
+                }
+                const grievancesData = await grievancesResponse.json();
+                console.log('Grievances fetched:', grievancesData);
+                setGrievanceList(grievancesData.map(g => ({
+                    id: g.id.toString(),
+                    title: g.title,
+                    description: g.description,
+                    status: g.status,
+                    date: g.created_at ? g.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                    department: g.department,
+                    imageUri: g.image_url || null,
+                    state: g.state || state || municipalitiesData.find(m => m.id === g.municipality)?.state || '',
+                    municipality: municipalitiesData.find(m => m.id === g.municipality)?.name || g.municipality?.name || '',
+                })));
             } catch (error) {
-                console.error('Error fetching user data:', error);
+                console.error('Error fetching data:', error.message);
+                Alert.alert('Error', `Failed to load data: ${error.message}`);
             }
         };
-        fetchUserData();
+        fetchData();
     }, []);
+
+    // Effect to update selected municipality when the list changes
+    useEffect(() => {
+        if (municipalities.length > 0 && !selectedMunicipality) {
+            setSelectedMunicipality(municipalities[0].name || municipalities[0]);
+        }
+    }, [municipalities, selectedMunicipality]);
 
     const showFeedbackModal = () => setIsFeedbackVisible(true);
     const hideFeedbackModal = () => {
@@ -123,8 +253,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                     }
                 }
             ],
-            "plain-text",
-            "https://picsum.photos/200/300"
+            { defaultValue: "https://picsum.photos/200/300" }
         );
     };
 
@@ -136,25 +265,62 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         }
 
         try {
-            const feedbackData = {
+            const token = await AsyncStorage.getItem('accessToken');
+            if (!token) throw new Error('No access token found');
+
+            const formData = new FormData();
+            formData.append('rating', feedbackRating);
+            formData.append('comment', feedbackComment);
+            formData.append('department', feedbackDepartment);
+            formData.append('state', state || municipalities.find(m => m.name === selectedMunicipality)?.state || '');
+            const selectedMunicipalityObj = municipalities.find(m => m.name.toLowerCase() === selectedMunicipality.toLowerCase());            if (!municipalityObj) throw new Error('Invalid municipality');
+            formData.append('municipality', municipalityObj.id);
+            if (feedbackImageUri) {
+                formData.append('image', {
+                    uri: feedbackImageUri,
+                    type: 'image/jpeg',
+                    name: 'image.jpg',
+                });
+            }
+
+            console.log('Submitting feedback with payload:', {
                 rating: feedbackRating,
                 comment: feedbackComment,
-                state: state,
-            };
-            await submitFeedback(selectedMunicipality, feedbackDepartment, feedbackData, feedbackImageUri ? { uri: feedbackImageUri, type: 'image/jpeg', fileName: 'image.jpg' } : null);
-            Alert.alert('Success', 'Feedback submitted successfully');
-            setFeedbackList([{
-                id: `f${Date.now()}`,
-                municipality: selectedMunicipality,
-                rating: feedbackRating,
-                comment: feedbackComment,
-                date: new Date().toISOString().split('T')[0],
                 department: feedbackDepartment,
+                state: state || municipalities.find(m => m.name === selectedMunicipality)?.state || '',
+                municipality: municipalityObj.id,
                 imageUri: feedbackImageUri,
-                state: state,
+            });
+
+            const response = await fetch('http://127.0.0.1:8000/api/feedback/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            const responseData = await response.json();
+            if (!response.ok) {
+                console.error('Feedback submission error response:', responseData);
+                throw new Error(responseData.detail || responseData.non_field_errors?.join(', ') || 'Failed to submit feedback');
+            }
+
+            console.log('Feedback submission response:', responseData);
+            setFeedbackList([{
+                id: responseData.id.toString(),
+                municipality: selectedMunicipality,
+                rating: responseData.rating,
+                comment: responseData.comment,
+                date: responseData.created_at ? responseData.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                department: responseData.department,
+                imageUri: responseData.image_url || feedbackImageUri || null,
+                state: responseData.state || state,
             }, ...feedbackList]);
+            Alert.alert('Success', 'Feedback submitted successfully');
         } catch (error) {
-            Alert.alert('Error', error.message || 'Failed to submit feedback');
+            console.error('Feedback submission error:', error.message);
+            Alert.alert('Error', `Failed to submit feedback: ${error.message}`);
         }
         hideFeedbackModal();
     };
@@ -167,17 +333,64 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         }
 
         try {
-            const grievanceData = {
+            const token = await AsyncStorage.getItem('accessToken');
+            if (!token) throw new Error('No access token found');
+
+            const formData = new FormData();
+            formData.append('title', grievanceTitle);
+            formData.append('description', grievanceDescription);
+            formData.append('department', grievanceDepartment);
+            formData.append('state', state || municipalities.find(m => m.name === selectedMunicipality)?.state || '');
+            const municipalityObj = municipalities.find(m => m.name === selectedMunicipality);
+            if (!municipalityObj) throw new Error('Invalid municipality');
+            formData.append('municipality', municipalityObj.id);
+            if (grievanceImageUri) {
+                formData.append('image', {
+                    uri: grievanceImageUri,
+                    type: 'image/jpeg',
+                    name: 'image.jpg',
+                });
+            }
+
+            console.log('Submitting grievance with payload:', {
                 title: grievanceTitle,
                 description: grievanceDescription,
-                state: state,
-            };
-            await submitGrievance(selectedMunicipality, grievanceDepartment, grievanceData, grievanceImageUri ? { uri: grievanceImageUri, type: 'image/jpeg', fileName: 'image.jpg' } : null);
+                department: grievanceDepartment,
+                state: state || municipalities.find(m => m.name === selectedMunicipality)?.state || '',
+                municipality: municipalityObj.id,
+                imageUri: grievanceImageUri,
+            });
+
+            const response = await fetch('http://127.0.0.1:8000/api/grievance/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            const responseData = await response.json();
+            if (!response.ok) {
+                console.error('Grievance submission error response:', responseData);
+                throw new Error(responseData.detail || responseData.non_field_errors?.join(', ') || 'Failed to submit grievance');
+            }
+
+            console.log('Grievance submission response:', responseData);
+            setGrievanceList([{
+                id: responseData.id.toString(),
+                title: responseData.title,
+                description: responseData.description,
+                status: responseData.status || 'Open',
+                date: responseData.created_at ? responseData.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                department: responseData.department,
+                imageUri: responseData.image_url || grievanceImageUri || null,
+                state: responseData.state || state,
+                municipality: selectedMunicipality,
+            }, ...grievanceList]);
             Alert.alert('Success', 'Grievance submitted successfully');
-            const updatedGrievances = await getGrievances();
-            setGrievanceList(updatedGrievances);
         } catch (error) {
-            Alert.alert('Error', error.message || 'Failed to submit grievance');
+            console.error('Grievance submission error:', error.message);
+            Alert.alert('Error', `Failed to submit grievance: ${error.message}`);
         }
         hideGrievanceModal();
     };
@@ -190,19 +403,19 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                     key={index}
                     style={styles.selectOption}
                     onPress={() => {
-                        onSelect(value);
+                        onSelect(value.name || value);
                         hideModal();
                     }}
                 >
-                    <Text style={{ fontWeight: value === selectedValue ? 'bold' : 'normal', color: value === selectedValue ? '#303f9f' : '#333' }}>
-                        {value}
+                    <Text style={{ fontWeight: (value.name || value) === selectedValue ? 'bold' : 'normal', color: (value.name || value) === selectedValue ? '#303f9f' : '#333' }}>
+                        {value.name || value}
                     </Text>
                 </TouchableOpacity>
             ))}
         </ScrollView>
     );
 
-    // NEW: Render Feedback Item
+    // Render Feedback Item
     const renderFeedbackItem = ({ item }) => (
         <Card style={styles.listItem}>
             <Card.Content>
@@ -227,7 +440,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
         </Card>
     );
 
-    // NEW: Render Grievance Item
+    // Render Grievance Item
     const renderGrievanceItem = ({ item }) => (
         <Card style={styles.listItem}>
             <Card.Content>
@@ -406,7 +619,7 @@ const FeedbackAndGrivanceScreen = ({ navigation }) => {
                     >
                         <Text variant="titleMedium" style={styles.modalTitle}>Select Municipality</Text>
                         {renderSelectorList(
-                            initialMunicipalities, 
+                            municipalities, 
                             selectedMunicipality, 
                             setSelectedMunicipality, 
                             () => setIsMunicipalitySelectorVisible(false)
