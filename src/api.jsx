@@ -1,93 +1,136 @@
+// Feedback/api.jsx
 import axios from "axios";
 
-// Local province data (imported statically)
-import * as Bagmati from "../provience/Bagmati";
-import * as Gandaki from "../provience/Gandaki";
-import * as Koshi from "../provience/Koshi";
-import * as Lumbini from "../provience/Lumbini";
-import * as Madhesh from "../provience/Madhesh";
-import * as Sudurpashchim from "../provience/Sudurpashchim";
-import * as Karnali from "../provience/Karnali";
+// --- Adjust this BASE_URL depending on platform / emulator / device ---
+export const BASE_URL = "http://10.0.2.2:8000/api"; // Android emulator
+// export const BASE_URL = "http://localhost:8000/api"; // iOS simulator / dev machine
+// export const BASE_URL = "http://192.168.x.y:8000/api"; // physical device (replace IP)
 
-// 🔹 Local Province data
-export const provinces = [
-  { name: "Bagmati", data: Bagmati.default },
-  { name: "Gandaki", data: Gandaki.default },
-  { name: "Koshi", data: Koshi.default },
-  { name: "Lumbini", data: Lumbini.default },
-  { name: "Madhesh", data: Madhesh.default },
-  { name: "Sudurpashchim", data: Sudurpashchim.default },
-  { name: "Karnali", data: Karnali.default },
+// -------- Local static departments (DEFAULT EXPORT) --------
+const departments = [
+  { id: 1, name: "Agriculture" },
+  { id: 2, name: "Education" },
+  { id: 3, name: "Health" },
+  { id: 4, name: "Infrastructure" },
+  { id: 5, name: "Tourism" },
+  { id: 6, name: "Finance" },
+  { id: 7, name: "Environment" },
+  { id: 8, name: "Transport" },
 ];
 
-// 🔹 Axios setup for backend communication
-const API = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/", // change this if needed
+// -------- Province data imports (DEFAULT imports; provinces export default) --------
+// IMPORTANT: these paths assume api.jsx sits at Feedback/ and provinces are at Feedback/provience/
+import Bagmati from "../provience/Bagmati";
+import Gandaki from "../provience/Gandaki";
+import Koshi from "../provience/Koshi";
+import Lumbini from "../provience/Lumbini";
+import Madhesh from "../provience/Madhesh";
+import Sudurpashchim from "../provience/Sudurpashchim";
+import Karnali from "../provience/Karnali";
+
+// Normalize province lookup
+const provinceDataMap = {
+  bagmati: Bagmati,
+  gandaki: Gandaki,
+  koshi: Koshi,
+  lumbini: Lumbini,
+  madhesh: Madhesh,
+  sudurpashchim: Sudurpashchim,
+  karnali: Karnali,
+};
+
+// -------- Axios instance --------
+const api = axios.create({
+  baseURL: BASE_URL.endsWith("/") ? BASE_URL : BASE_URL + "/",
+  timeout: 20000,
 });
 
-// 🔹 Feedback & Grievance Endpoints
-export const sendFeedback = async (feedbackData) => {
+// If you need auth header to be attached automatically, add interceptor here
+// api.interceptors.request.use(async (cfg) => {
+//   const token = await AsyncStorage.getItem('authToken');
+//   if (token) cfg.headers.Authorization = `Token ${token}`;
+//   return cfg;
+// });
+
+// -------- Backend API helpers (named exports) --------
+export const sendFeedback = async (payload, token) => {
   try {
-    const response = await API.post("feedback/", feedbackData);
-    return response.data;
-  } catch (error) {
-    console.error("Error sending feedback:", error.response?.data || error.message);
-    throw error;
+    const res = await api.post("feedbacks/", payload, {
+      headers: token ? { Authorization: `Token ${token}` } : undefined,
+    });
+    return res.data;
+  } catch (err) {
+    // bubble useful message
+    throw err.response?.data || err;
   }
 };
 
-export const sendGrievance = async (grievanceData) => {
+export const sendGrievance = async (payload, token) => {
   try {
-    const response = await API.post("grievance/", grievanceData);
-    return response.data;
-  } catch (error) {
-    console.error("Error sending grievance:", error.response?.data || error.message);
-    throw error;
+    const res = await api.post("grievances/", payload, {
+      headers: token ? { Authorization: `Token ${token}` } : undefined,
+      // If uploading files, set content-type to multipart/form-data from caller
+    });
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || err;
   }
 };
 
-// 🔹 Admin APIs
-export const getFeedbacks = async () => {
-  try {
-    const response = await API.get("feedback/");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching feedbacks:", error.response?.data || error.message);
-    throw error;
+export const listFeedbacks = async (token) => {
+  const res = await api.get("feedbacks/", {
+    headers: token ? { Authorization: `Token ${token}` } : undefined,
+  });
+  return res.data;
+};
+
+export const listGrievances = async (token) => {
+  const res = await api.get("grievances/", {
+    headers: token ? { Authorization: `Token ${token}` } : undefined,
+  });
+  return res.data;
+};
+
+export const adminRespondFeedback = async (id, responseText, token) => {
+  const res = await api.post(`feedbacks/${id}/respond/`, { response: responseText }, {
+    headers: token ? { Authorization: `Token ${token}` } : undefined,
+  });
+  return res.data;
+};
+
+export const adminRespondGrievance = async (id, responseText, token) => {
+  const res = await api.post(`grievances/${id}/respond/`, { response: responseText }, {
+    headers: token ? { Authorization: `Token ${token}` } : undefined,
+  });
+  return res.data;
+};
+
+// -------- Local data helpers --------
+export const getDistrictsByProvince = (provinceName = "") => {
+  if (!provinceName) return [];
+  const key = provinceName.toLowerCase();
+  const data = provinceDataMap[key];
+  // Some province files export object { name: 'Bagmati', districts: [...] } OR array; handle both:
+  if (!data) return [];
+  if (Array.isArray(data)) {
+    // if the file exported an array of districts directly
+    return data;
   }
+  // expected shape: { name: 'Bagmati', districts: [ { name: 'X', municipalities: [...] } ] }
+  return data.districts || [];
 };
 
-export const getGrievances = async () => {
-  try {
-    const response = await API.get("grievance/");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching grievances:", error.response?.data || error.message);
-    throw error;
-  }
+export const getMunicipalitiesByDistrict = (provinceName = "", districtName = "") => {
+  const districts = getDistrictsByProvince(provinceName);
+  if (!districts || districts.length === 0) return [];
+  // districts might be an array of objects or an array of something else; try to normalize
+  const found = districts.find((d) => {
+    if (!d) return false;
+    const n = d.name || d.district || d.title || "";
+    return n.toString().toLowerCase() === (districtName || "").toString().toLowerCase();
+  });
+  return (found && (found.municipalities || found.munis || found.items)) || [];
 };
 
-export const getDepartments = async () => {
-  try {
-    const response = await API.get("departments/");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching departments:", error.response?.data || error.message);
-    throw error;
-  }
-};
-
-// 🔹 Helper to get local district & municipality data
-export const getDistrictsByProvince = (provinceName) => {
-  const province = provinces.find((p) => p.name.toLowerCase() === provinceName.toLowerCase());
-  return province ? province.data.districts : [];
-};
-
-export const getMunicipalitiesByDistrict = (provinceName, districtName) => {
-  const province = provinces.find((p) => p.name.toLowerCase() === provinceName.toLowerCase());
-  if (!province) return [];
-  const district = province.data.districts.find(
-    (d) => d.name.toLowerCase() === districtName.toLowerCase()
-  );
-  return district ? district.municipalities : [];
-};
+// -------- Default export (departments array) --------
+export default departments;
