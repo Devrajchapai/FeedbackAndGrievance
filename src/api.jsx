@@ -1,200 +1,93 @@
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from "axios";
 
-const BASE_URL = 'http://127.0.0.1:8000/api/';
+// Local province data (imported statically)
+import * as Bagmati from "../provience/Bagmati";
+import * as Gandaki from "../provience/Gandaki";
+import * as Koshi from "../provience/Koshi";
+import * as Lumbini from "../provience/Lumbini";
+import * as Madhesh from "../provience/Madhesh";
+import * as Sudurpashchim from "../provience/Sudurpashchim";
+import * as Karnali from "../provience/Karnali";
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+// 🔹 Local Province data
+export const provinces = [
+  { name: "Bagmati", data: Bagmati.default },
+  { name: "Gandaki", data: Gandaki.default },
+  { name: "Koshi", data: Koshi.default },
+  { name: "Lumbini", data: Lumbini.default },
+  { name: "Madhesh", data: Madhesh.default },
+  { name: "Sudurpashchim", data: Sudurpashchim.default },
+  { name: "Karnali", data: Karnali.default },
+];
+
+// 🔹 Axios setup for backend communication
+const API = axios.create({
+  baseURL: "http://127.0.0.1:8000/api/", // change this if needed
 });
 
- 
-api.interceptors.request.use(
-  async (config) => {
-    const token = await AsyncStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
-        const response = await axios.post(`${BASE_URL}token/refresh/`, { refresh: refreshToken });
-        const newAccessToken = response.data.access;
-        await AsyncStorage.setItem('accessToken', newAccessToken);
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
-        return Promise.reject(refreshError);
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-export const login = async (email, password) => {
+// 🔹 Feedback & Grievance Endpoints
+export const sendFeedback = async (feedbackData) => {
   try {
-    const payload = { username: email, password };
-    console.log('Login payload:', JSON.stringify(payload, null, 2)); // Log payload
-    const response = await api.post('token/', payload);
-    const { access, refresh } = response.data;
-    await AsyncStorage.setItem('accessToken', access);
-    await AsyncStorage.setItem('refreshToken', refresh);
-    console.log('Login successful, tokens saved');
+    const response = await API.post("feedback/", feedbackData);
     return response.data;
   } catch (error) {
-    console.log('Login error:', JSON.stringify(error.response?.data, null, 2)); // Log detailed error
-    throw error.response?.data || { detail: 'Login failed. Please check your email and password.' };
-  }
-};
-
- 
-export const register = async (userData) => {
-  try {
-    const response = await api.post('register/', userData);
-    const data = await response.json();
-
-      if (response.ok) {
-        // ✅ Save token so layout.js sees it
-        await AsyncStorage.setItem("accessToken", data.access);
-        await AsyncStorage.setItem("refreshToken", data.refresh);
-
-        Alert.alert("Signup successful!");
-        navigation.replace("HomeScreen"); // redirect to home
-      } else {
-        Alert.alert("Login failed", data.detail || "Invalid credentials");
-      }
-    return response.data;
-  } catch (error) {
-    console.log('Signup error:', error.response?.data); // Log backend error for debugging
-    throw error.response?.data || { message: 'Signup failed. Please check your input and try again.' };
-  }
-};
- 
-export const logout = async () => {
-  try {
-    await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
-    return { success: true };
-  } catch (error) {
+    console.error("Error sending feedback:", error.response?.data || error.message);
     throw error;
   }
 };
 
- 
-export const getProvinces = async () => {
+export const sendGrievance = async (grievanceData) => {
   try {
-    const response = await api.get('states/');
+    const response = await API.post("grievance/", grievanceData);
     return response.data;
   } catch (error) {
-    throw error.response?.data || 'Failed to fetch states';
+    console.error("Error sending grievance:", error.response?.data || error.message);
+    throw error;
   }
 };
 
- 
-export const getMunicipalities = async (stateId) => {
+// 🔹 Admin APIs
+export const getFeedbacks = async () => {
   try {
-    const url = stateId ? `municipalities/?state=${stateId}` : 'municipalities/';
-    const response = await api.get(url);
+    const response = await API.get("feedback/");
     return response.data;
   } catch (error) {
-    throw error.response?.data || 'Failed to fetch municipalities';
-  }
-};
-
-export const submitFeedback = async (municipalityId, departmentId, feedbackData, imageFile = null) => {
-  try {
-    const formData = new FormData();
-    formData.append('rating', feedbackData.rating);
-    formData.append('comment', feedbackData.comment);
-    formData.append('municipality', municipalityId);
-    formData.append('department', departmentId);
-    if (imageFile) {
-      formData.append('image', {
-        uri: imageFile.uri,
-        type: imageFile.type || 'image/jpeg',
-        name: imageFile.fileName || 'image.jpg',
-      });
-    }
-    const response = await api.post(`municipalities/${municipalityId}/departments/${departmentId}/feedback/`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || 'Failed to submit feedback';
-  }
-};
-
-export const submitGrievance = async (municipalityId, departmentId, grievanceData, imageFile = null) => {
-  try {
-    const formData = new FormData();
-    formData.append('title', grievanceData.title);
-    formData.append('description', grievanceData.description);
-    formData.append('municipality', municipalityId);
-    formData.append('department', departmentId);
-    if (imageFile) {
-      formData.append('image', {
-        uri: imageFile.uri,
-        type: imageFile.type || 'image/jpeg',
-        name: imageFile.fileName || 'image.jpg',
-      });
-    }
-    const response = await api.post(`municipalities/${municipalityId}/departments/${departmentId}/grievance/`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || 'Failed to submit grievance';
+    console.error("Error fetching feedbacks:", error.response?.data || error.message);
+    throw error;
   }
 };
 
 export const getGrievances = async () => {
   try {
-    const response = await api.get('grievances/');
+    const response = await API.get("grievance/");
     return response.data;
   } catch (error) {
-    throw error.response?.data || 'Failed to fetch grievances';
+    console.error("Error fetching grievances:", error.response?.data || error.message);
+    throw error;
   }
 };
 
-export const respondToGrievance = async (grievanceId, responseData) => {
+export const getDepartments = async () => {
   try {
-    const response = await api.post(`grievances/${grievanceId}/`, responseData);
+    const response = await API.get("departments/");
     return response.data;
   } catch (error) {
-    throw error.response?.data || 'Failed to respond to grievance';
+    console.error("Error fetching departments:", error.response?.data || error.message);
+    throw error;
   }
 };
 
-export const updateGrievanceStatus = async (grievanceId, status) => {
-  try {
-    if (!['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'].includes(status)) {
-      throw new Error(`Invalid status. Must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED`);
-    }
-    const response = await api.patch(`grievances/${grievanceId}/`, { status });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data?.status || error.message || 'Failed to update grievance status';
-  }
+// 🔹 Helper to get local district & municipality data
+export const getDistrictsByProvince = (provinceName) => {
+  const province = provinces.find((p) => p.name.toLowerCase() === provinceName.toLowerCase());
+  return province ? province.data.districts : [];
 };
 
-export const getUserProfile = async () => {
-  try {
-    const response = await api.get('user/profile/');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || 'Failed to fetch user profile';
-  }
+export const getMunicipalitiesByDistrict = (provinceName, districtName) => {
+  const province = provinces.find((p) => p.name.toLowerCase() === provinceName.toLowerCase());
+  if (!province) return [];
+  const district = province.data.districts.find(
+    (d) => d.name.toLowerCase() === districtName.toLowerCase()
+  );
+  return district ? district.municipalities : [];
 };
-
-export default api;

@@ -3,22 +3,20 @@ import { View, Text, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LogoutScreen({ navigation }) {
-  useEffect(async() => {
+  useEffect(() => {
     const logout = async () => {
       try {
-        // remove token from storage
-        await AsyncStorage.removeItem("accessToken");
-        console.log("test1")
-        // navigate back to login
-        navigation.replace('Login')
-        console.log('test2')
+        await AsyncStorage.removeItem("authToken");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Login" }],
+        });
       } catch (e) {
         console.log("Error logging out:", e);
       }
     };
-
     logout();
-  }, []);
+  }, [navigation]);
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

@@ -8,7 +8,7 @@ const districtsData = [
     id: "1",
     name: "Achham",
     municipalities:[
-      "dhakari rural municipality",
+        "dhakari rural municipality",
         "mellekh rural municipality",
         "chaurpati rural municipality",
         "ramaroshan rural municipality",

@@ -28,7 +28,7 @@ const districtsData = [
   {
     id: "2",
     municipalities: [
- "gandaki rural municipality",
+        "gandaki rural municipality",
         "dharche rural municipality",
         "aarughat rural municipality",
         "ajirkot rural municipality",

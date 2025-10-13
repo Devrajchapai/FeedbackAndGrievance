@@ -6,7 +6,7 @@ const districtsData = [
   {
     id: "1",
     municipalities:[
-"yashodhara rural municipality",
+        "yashodhara rural municipality",
         "bijayanagar rural municipality",
         "mayadevi rural municipality",
         "suddhodhan rural municipality",
