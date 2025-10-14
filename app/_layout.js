@@ -57,7 +57,7 @@ const layout = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isLoggedIn ? (
         <>
-          <Stack.Screen name="HomeScreen" component={HomeScreen} />
+          <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Bagmati" component={Bagmati} />
           <Stack.Screen name="Gandaki" component={Gandaki} />
           <Stack.Screen name="Koshi" component={Koshi} />
@@ -77,6 +77,8 @@ const layout = () => {
         </>
       ) : (
         <>
+          <Stack.Screen name="Logout" component={LogoutScreen} />
+          <Stack.Screen name="UserProfile" component={UserProfile} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
         </>
