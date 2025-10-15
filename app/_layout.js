@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "../screens/HomeScreen";
-import LoginScreen from "../screens/credentials/LoginScreen";
-import SignupScreen from "../screens/credentials/SignupScreen";
-import LogoutScreen from "../screens/credentials/LogoutScreen";
+import LoginScreen from "../screens/LoginScreen";
+import SignupScreen from "../screens/SignupScreen";
+import LogoutScreen from "../screens/LogoutScreen";
 import Bagmati from "../provience/Bagmati";
 import Koshi from "../provience/Koshi";
 import Gandaki from "../provience/Gandaki";

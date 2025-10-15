@@ -1191,16 +1191,6 @@ export const PROVINCES = [
         ]
       }
     ]
-  },
-  {
-    "id": "8",
-    "name": " Layout",
-    "districts": []
-  },
-  {
-    "id": "9",
-    "name": "Index",
-    "districts": []
   }
 ];
 

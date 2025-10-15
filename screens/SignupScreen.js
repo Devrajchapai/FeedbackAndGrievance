@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { register } from '../../src/api';
+import { register } from '../src/api';
 
 const SignupScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -18,7 +18,7 @@ const SignupScreen = ({ navigation }) => {
   }
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/api/register/", {
+    const response = await fetch("http://127.0.0.1:8000/api/auth/register/", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
