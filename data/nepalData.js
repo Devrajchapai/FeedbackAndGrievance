@@ -50,7 +50,34 @@ export const PROVINCES = [
   {
     "id": "2",
     "name": "Gandaki",
-    "districts": []
+    "districts": [
+      {
+        "id": "1",
+        "name": "Mustang",
+        "municipalities":[
+          {
+            "id" : "1",
+            "name" : "thasang rural municipality",
+          },
+          {
+            "id" : "2",
+            "name" : "gharapjhong rural municipality",
+          },
+          {
+            "id" : "3",
+            "name" : "lomanthang rural municipality",
+          },
+          {
+            "id" : "4",
+            "name" : "lo-ghekar damodarkunda rural municipality",
+          },
+          {
+            "id" : "5",
+            "name" : "waragung muktikhsetra rural municipality",
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "3",

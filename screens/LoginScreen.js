@@ -1,97 +1,135 @@
+// screens/LoginScreen.js
 import React, { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  StatusBar,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
   Alert,
 } from "react-native";
-import { Button, TextInput } from "react-native-paper";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { login } from "../src/api"; // ✅ correct import
+import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
 
-const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("");
+const API_URL = "http://127.0.0.1:8000/api";
+
+export default function LoginScreen() {
+  const navigation = useNavigation();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordVisibility, setPasswordVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    try {
-      const data = await login(email, password);
+    if (!username || !password) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
 
-      if (data && data.access) {
-        await AsyncStorage.setItem("access", data.access);
-        await AsyncStorage.setItem("refresh", data.refresh);
-        Alert.alert("✅ Login successful!");
-        navigation.replace("Home");
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API_URL}/token/`, {
+        username,
+        password,
+      });
+
+      const { access, refresh } = response.data;
+
+      if (access && refresh) {
+        await AsyncStorage.setItem("access", access);
+        await AsyncStorage.setItem("refresh", refresh);
+
+        // ✅ Redirect to Home
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
       } else {
-        Alert.alert("Login failed", "Invalid credentials or no token received");
+        Alert.alert("Login failed", "Invalid server response.");
       }
-    } catch (err) {
-      console.log("Login error:", err.response?.data || err.message);
-      Alert.alert("Login failed", err.response?.data?.detail || "Invalid credentials");
+    } catch (error) {
+      console.log("Login error:", error.response?.data || error.message);
+      Alert.alert(
+        "Login failed",
+        error.response?.data?.detail ||
+          "Please check your credentials and try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView>
-        <KeyboardAvoidingView behavior="position">
-          <View>
-            <StatusBar backgroundColor="blue" barStyle="dark-content" />
-            <Text style={{ fontSize: 35, marginLeft: 18, marginTop: 10, color: "gray" }}>
-              Welcome to
-            </Text>
-            <Text style={{ fontSize: 30, marginLeft: 18, color: "blue" }}>
-              Feedback and Redressal
-            </Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>🔐 Login</Text>
 
-            <TextInput
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              mode="outlined"
-              style={{ margin: 18 }}
-              theme={{ colors: { primary: "blue" } }}
-            />
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        placeholderTextColor="#aaa"
+        value={username}
+        onChangeText={setUsername}
+        autoCapitalize="none"
+      />
 
-            <TextInput
-              label="Password"
-              secureTextEntry={!passwordVisibility}
-              value={password}
-              onChangeText={setPassword}
-              mode="outlined"
-              style={{ marginHorizontal: 18 }}
-              theme={{ colors: { primary: "blue" } }}
-              right={
-                <TextInput.Icon
-                  icon={passwordVisibility ? "eye-off" : "eye"}
-                  onPress={() => setPasswordVisible(!passwordVisibility)}
-                />
-              }
-            />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        placeholderTextColor="#aaa"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
 
-            <Button
-              icon="account-arrow-right"
-              mode="contained"
-              onPress={handleLogin}
-              style={{ margin: 18 }}
-            >
-              Login
-            </Button>
+      <TouchableOpacity
+        style={[styles.button, loading && { opacity: 0.7 }]}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? "Logging in..." : "Login"}
+        </Text>
+      </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-              <Text style={{ fontSize: 18, marginLeft: 18, marginTop: 20 }}>
-                Don't have an account? Sign up
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </SafeAreaProvider>
+      <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+        <Text style={styles.link}>Don’t have an account? Sign up</Text>
+      </TouchableOpacity>
+    </View>
   );
-};
+}
 
-export default LoginScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f7f9fc",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#007bff",
+    marginBottom: 40,
+  },
+  input: {
+    width: "100%",
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    color: "#333",
+  },
+  button: {
+    backgroundColor: "#007bff",
+    padding: 15,
+    borderRadius: 10,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  link: { color: "#007bff", fontSize: 14 },
+});

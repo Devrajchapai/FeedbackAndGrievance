@@ -7,7 +7,7 @@ const LogoutScreen = ({ navigation }) => {
     try {
       await AsyncStorage.removeItem("token");
       Alert.alert("Logged out successfully");
-      navigation.replace("Login");
+      navigation.replace("LoginScreen");
     } catch (error) {
       console.error("Logout error:", error);
     }

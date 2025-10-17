@@ -1,13 +1,13 @@
 import { NavigationContainer } from "@react-navigation/native"
-import layout from "./_layout"
-
+import Layout from "./_layout"
+import { navigationRef } from "../navigation/RootNavigation";
 
 const index = () => {
   
   return ( 
   
-    <NavigationContainer>
-      <layout />
+    <NavigationContainer ref={navigationRef}>
+      <Layout />
     </NavigationContainer>   
  
   )

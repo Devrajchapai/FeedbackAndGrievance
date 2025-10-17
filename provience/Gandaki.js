@@ -96,7 +96,7 @@ const districtsData = [
   {
     id: "6",
     municipalities: [
-"thasang rural municipality",
+        "thasang rural municipality",
         "gharapjhong rural municipality",
         "lomanthang rural municipality",
         "lo-ghekar damodarkunda rural municipality",

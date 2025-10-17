@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// screens/FeedbackAndGrivanceScreen.js
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,259 +8,351 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  Platform,
+  Image,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { PROVINCES, DEPARTMENTS } from "../data/nepalData";
-import { sendFeedback, sendGrievance } from "../src/api"; // ✅ import the fixed functions
+import { PROVINCES, DEPARTMENTS } from "../data/nepalData"; // adjust path if needed
+import { sendFeedback, sendGrievance } from "../src/api";
+import * as ImagePicker from "expo-image-picker"; // optional: install expo-image-picker
+
+// Small segmented control button
+const Segmented = ({ value, onChange }) => (
+  <View style={segStyles.container}>
+    <TouchableOpacity
+      style={[segStyles.btn, value === "feedback" && segStyles.active]}
+      onPress={() => onChange("feedback")}
+    >
+      <Text style={[segStyles.txt, value === "feedback" && segStyles.txtActive]}>Feedback</Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      style={[segStyles.btn, value === "grievance" && segStyles.active]}
+      onPress={() => onChange("grievance")}
+    >
+      <Text style={[segStyles.txt, value === "grievance" && segStyles.txtActive]}>Grievance</Text>
+    </TouchableOpacity>
+  </View>
+);
 
 const FeedbackAndGrivanceScreen = ({ route, navigation }) => {
-  const { province: initialProvince, district: initialDistrict } = route.params || {};
+  // Allow pre-selection from route.params (province/district passed from previous screen)
+  const { province: paramProvince, district: paramDistrict } = route.params || {};
 
-  const [type, setType] = useState("feedback"); // "feedback" or "grievance"
-  const [province, setProvince] = useState(initialProvince || "");
-  const [district, setDistrict] = useState(initialDistrict || "");
+  const [type, setType] = useState("feedback");
+  const [province, setProvince] = useState(paramProvince || "");
+  const [district, setDistrict] = useState(paramDistrict || "");
   const [municipality, setMunicipality] = useState("");
   const [department, setDepartment] = useState("");
-  const [message, setMessage] = useState("");
-  const [title, setTitle] = useState("");
+  const [comment, setComment] = useState("");
   const [rating, setRating] = useState("");
+  const [title, setTitle] = useState("");
+  const [imageUri, setImageUri] = useState(null);
+  const [imagePermissionGranted, setImagePermissionGranted] = useState(true); // assume true until we test
 
-  // Derived data
-  const selectedProvince = PROVINCES.find((p) => p.name === province);
+  // Derived lists
+  const selectedProvince = PROVINCES.find((p) => p.name === province || p.id === province);
   const districts = selectedProvince ? selectedProvince.districts : [];
 
-  const selectedDistrict = districts.find((d) => d.name === district);
+  const selectedDistrict = districts.find((d) => d.name === district || d.id === district);
   const municipalities = selectedDistrict ? selectedDistrict.municipalities : [];
 
-  // --------------------------
-  // Submit Handler
-  // --------------------------
-  const handleSubmit = async () => {
+  useEffect(() => {
+    // If route params changed after mount, update states
+    if (paramProvince && paramProvince !== province) setProvince(paramProvince);
+    if (paramDistrict && paramDistrict !== district) setDistrict(paramDistrict);
+  }, [paramProvince, paramDistrict]);
+
+  // IMAGE PICKER (optional)
+  const pickImage = async () => {
     try {
-      if (!province || !district || !municipality || !department) {
-        Alert.alert("Error", "Please fill all location and department fields.");
+      // request permission on iOS/Android
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission required", "Permission to access photos is required to attach images.");
+        setImagePermissionGranted(false);
         return;
       }
-
-      if (type === "feedback" && (!rating || !message)) {
-        Alert.alert("Error", "Please provide both rating and comment.");
-        return;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.6,
+        allowsEditing: true,
+      });
+      if (!result.cancelled) {
+        setImageUri(result.uri);
       }
+    } catch (err) {
+      console.warn("Image picker error", err);
+    }
+  };
 
-      if (type === "grievance" && (!title || !message)) {
-        Alert.alert("Error", "Please provide a title and message for grievance.");
-        return;
-      }
+  // Submit handler
+  const handleSubmit = async () => {
+    if (!province || !district || !municipality || !department) {
+      Alert.alert("Missing fields", "Please select province / district / municipality and department.");
+      return;
+    }
 
+    try {
       if (type === "feedback") {
+        if (!rating || Number.isNaN(Number(rating)) || Number(rating) < 1 || Number(rating) > 5) {
+          Alert.alert("Invalid rating", "Please provide a rating between 1 and 5.");
+          return;
+        }
         await sendFeedback({
-          province,
+          state: province,
           district,
           municipality,
           department,
           rating,
-          message,
+          comment,
         });
-        Alert.alert("Success", "Your feedback has been submitted!");
+        Alert.alert("Success", "Feedback submitted.");
       } else {
+        // grievance
+        if (!title || title.trim() === "") {
+          Alert.alert("Missing title", "Please add a title for the grievance.");
+          return;
+        }
         await sendGrievance({
-          province,
+          state: province,
           district,
           municipality,
           department,
           title,
-          message,
+          comment,
+          imageUri, // optional
         });
-        Alert.alert("Success", "Your grievance has been submitted!");
+        Alert.alert("Success", "Grievance submitted.");
       }
 
-      // Reset form and navigate home
-      setMessage("");
+      // reset fields (keep province/district so user doesn't have to re-select)
       setTitle("");
+      setComment("");
       setRating("");
-      navigation.navigate("Home");
-    } catch (error) {
-      console.error("Submit error:", error);
-      if (error.response?.status === 403) {
-        Alert.alert("Authentication Error", "Please log in again.");
-        navigation.replace("Login");
-      } else {
-        Alert.alert("Error", "Failed to send submission. Try again later.");
+      setImageUri(null);
+      navigation.navigate("Home"); // ensure route name matches your layout
+    } catch (err) {
+      console.error("Submit error:", err);
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        Alert.alert("Authentication", "Please login again.");
+        navigation.replace("Login"); // ensure "Login" route exists in navigator
+        return;
       }
+      // show backend message if any
+      const detail = err?.response?.data || err?.message || "Submission failed";
+      Alert.alert("Error", JSON.stringify(detail));
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Feedback & Grievance</Text>
+      <Text style={styles.header}>Engagement</Text>
 
-      {/* Type Selector */}
-      <Text style={styles.label}>Select Type</Text>
-      <Picker
-        selectedValue={type}
-        onValueChange={(value) => setType(value)}
-        style={styles.picker}
-      >
-        <Picker.Item label="Feedback" value="feedback" />
-        <Picker.Item label="Grievance" value="grievance" />
-      </Picker>
+      <Segmented value={type} onChange={setType} />
 
-      {/* Province Dropdown */}
-      <Text style={styles.label}>Select Province</Text>
-      <Picker
-        selectedValue={province}
-        onValueChange={(value) => {
-          setProvince(value);
-          setDistrict("");
-          setMunicipality("");
-        }}
-        style={styles.picker}
-      >
-        <Picker.Item label="-- Select Province --" value="" />
-        {PROVINCES.map((p) => (
-          <Picker.Item key={p.id} label={p.name} value={p.name} />
-        ))}
-      </Picker>
+      <Text style={styles.label}>Province</Text>
+      <View style={styles.pickerBox}>
+        <Picker
+          selectedValue={province}
+          onValueChange={(val) => {
+            setProvince(val);
+            setDistrict("");
+            setMunicipality("");
+          }}
+        >
+          <Picker.Item label="-- Select Province --" value="" />
+          {PROVINCES.map((p) => (
+            <Picker.Item key={p.id} label={p.name} value={p.name} />
+          ))}
+        </Picker>
+      </View>
 
-      {/* District Dropdown */}
       {province ? (
         <>
-          <Text style={styles.label}>Select District</Text>
-          <Picker
-            selectedValue={district}
-            onValueChange={(value) => {
-              setDistrict(value);
-              setMunicipality("");
-            }}
-            style={styles.picker}
-          >
-            <Picker.Item label="-- Select District --" value="" />
-            {districts.map((d) => (
-              <Picker.Item key={d.id} label={d.name} value={d.name} />
-            ))}
-          </Picker>
+          <Text style={styles.label}>District</Text>
+          <View style={styles.pickerBox}>
+            <Picker
+              selectedValue={district}
+              onValueChange={(val) => {
+                setDistrict(val);
+                setMunicipality("");
+              }}
+            >
+              <Picker.Item label="-- Select District --" value="" />
+              {districts.map((d) => (
+                <Picker.Item key={d.id} label={d.name} value={d.name} />
+              ))}
+            </Picker>
+          </View>
         </>
       ) : null}
 
-      {/* Municipality Dropdown */}
       {district ? (
         <>
-          <Text style={styles.label}>Select Municipality</Text>
-          <Picker
-            selectedValue={municipality}
-            onValueChange={(value) => setMunicipality(value)}
-            style={styles.picker}
-          >
-            <Picker.Item label="-- Select Municipality --" value="" />
-            {municipalities.map((m) => (
-              <Picker.Item key={m.id} label={m.name} value={m.name} />
-            ))}
-          </Picker>
+          <Text style={styles.label}>Municipality</Text>
+          <View style={styles.pickerBox}>
+            <Picker
+              selectedValue={municipality}
+              onValueChange={(val) => setMunicipality(val)}
+            >
+              <Picker.Item label="-- Select Municipality --" value="" />
+              {municipalities.map((m) => (
+                <Picker.Item key={m.id} label={m.name} value={m.name} />
+              ))}
+            </Picker>
+          </View>
         </>
       ) : null}
 
-      {/* Department Dropdown */}
-      <Text style={styles.label}>Select Department</Text>
-      <Picker
-        selectedValue={department}
-        onValueChange={(value) => setDepartment(value)}
-        style={styles.picker}
-      >
-        <Picker.Item label="-- Select Department --" value="" />
-        {DEPARTMENTS.map((dep) => (
-          <Picker.Item key={dep.id} label={dep.name} value={dep.name} />
-        ))}
-      </Picker>
+      <Text style={styles.label}>Department</Text>
+      <View style={styles.pickerBox}>
+        <Picker
+          selectedValue={department}
+          onValueChange={(val) => setDepartment(val)}
+        >
+          <Picker.Item label="-- Select Department --" value="" />
+          {DEPARTMENTS.map((d) => (
+            <Picker.Item key={d.id} label={d.name} value={d.name} />
+          ))}
+        </Picker>
+      </View>
 
-      {/* Rating for Feedback */}
-      {type === "feedback" && (
+      {type === "feedback" ? (
         <>
-          <Text style={styles.label}>Rating (1–5)</Text>
+          <Text style={styles.label}>Rating (1 - 5)</Text>
           <TextInput
-            style={styles.textInput}
-            placeholder="Enter rating between 1 and 5"
+            style={styles.input}
             keyboardType="numeric"
             value={rating}
             onChangeText={setRating}
+            placeholder="e.g. 4"
           />
         </>
-      )}
-
-      {/* Title for Grievance */}
-      {type === "grievance" && (
+      ) : (
         <>
           <Text style={styles.label}>Title</Text>
           <TextInput
-            style={styles.textInput}
-            placeholder="Enter grievance title"
+            style={styles.input}
             value={title}
             onChangeText={setTitle}
+            placeholder="Short descriptive title"
           />
         </>
       )}
 
-      {/* Message Box */}
-      <Text style={styles.label}>Your Message</Text>
+      <Text style={styles.label}>
+        {type === "feedback" ? "Comment" : "Describe your grievance"}
+      </Text>
       <TextInput
-        style={styles.textArea}
-        placeholder={
-          type === "feedback"
-            ? "Write your feedback..."
-            : "Describe your grievance..."
-        }
+        style={[styles.input, styles.textArea]}
+        value={comment}
+        onChangeText={setComment}
         multiline
-        value={message}
-        onChangeText={setMessage}
       />
 
-      {/* Submit Button */}
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Submit {type === "feedback" ? "Feedback" : "Grievance"}</Text>
+      {type === "grievance" && (
+        <>
+          <Text style={styles.label}>Attach image (optional)</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <TouchableOpacity onPress={pickImage} style={styles.imageBtn}>
+              <Text style={{ color: "#fff" }}>Pick Image</Text>
+            </TouchableOpacity>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.preview} />
+            ) : (
+              <Text style={{ color: "#666" }}>No image selected</Text>
+            )}
+          </View>
+        </>
+      )}
+
+      <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+        <Text style={styles.submitText}>
+          Submit {type === "feedback" ? "Feedback" : "Grievance"}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: "#f9f9f9" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center" },
-  label: { marginTop: 10, fontWeight: "600", fontSize: 16 },
-  picker: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
+const segStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    backgroundColor: "#e9eefb",
     borderRadius: 8,
-    marginVertical: 5,
+    overflow: "hidden",
+    marginVertical: 12,
   },
-  textInput: {
+  btn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  active: {
+    backgroundColor: "#2b6df6",
+  },
+  txt: {
+    color: "#2b6df6",
+    fontWeight: "600",
+  },
+  txtActive: {
+    color: "#fff",
+  },
+});
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 18,
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
+    minHeight: "100%",
+  },
+  header: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  label: {
+    marginTop: 12,
+    fontWeight: "600",
+  },
+  pickerBox: {
+    backgroundColor: "#f7f9ff",
+    borderRadius: 8,
+    marginTop: 6,
+  },
+  input: {
+    backgroundColor: "#f7f9ff",
     borderRadius: 8,
     padding: 10,
-    marginVertical: 10,
+    marginTop: 6,
   },
   textArea: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginVertical: 10,
     height: 120,
     textAlignVertical: "top",
   },
-  button: {
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
+  submitBtn: {
+    backgroundColor: "#2b6df6",
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginTop: 18,
   },
-  buttonText: {
-    color: "#fff",
+  submitText: {
     textAlign: "center",
-    fontSize: 16,
-    fontWeight: "bold",
+    color: "#fff",
+    fontWeight: "700",
+  },
+  imageBtn: {
+    backgroundColor: "#2b6df6",
+    padding: 10,
+    borderRadius: 8,
+  },
+  preview: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginLeft: 12,
   },
 });
 
